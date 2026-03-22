@@ -1,17 +1,19 @@
 import { supabase } from "./supabase.js";
 import Dashboard from "./views/dashboard.js";
 import Borrowers from "./views/borrowers.js";
+import LoanForm from "./views/loanForm.js";
 
 const { createApp } = Vue;
 
 createApp({
-  components: { Dashboard, Borrowers },
+  components: { Dashboard, Borrowers, LoanForm },
   data() {
     return {
       user: null,
       email: "",
       password: "",
-      currentView: "dashboard"
+      currentView: "dashboard",
+      selectedBorrower: null
     };
   },
   async mounted() {
@@ -59,7 +61,12 @@ createApp({
 
         <!-- MAIN CONTENT -->
         <div class="main">
-          <component :is="currentView" :user="user" />
+          <component 
+            :is="currentView" 
+            :user="user"
+            :borrower="selectedBorrower"
+            @open-loan-form="b => { selectedBorrower = b; currentView = 'LoanForm'; }"
+          />          
         </div>
 
       </div>

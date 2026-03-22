@@ -55,8 +55,8 @@ export default {
       alert("Next step: link this to loan creation");
     },
     addLoanFromBorrower(b) {
-      alert("Next step: open loan form with borrower pre-selected: " + b.firstname);
-    }    
+      this.$emit("open-loan-form", b);
+    }
   },
   template: `
     <div>
@@ -188,7 +188,7 @@ export default {
           <button @click="updateBorrower">Save Changes</button>
 
         </div>
-        
+
         <h3>Actions</h3>
         <button @click="goToAddLoan">Add Loan</button>
 
