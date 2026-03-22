@@ -25,7 +25,9 @@
   <!-- DASHBOARD -->
   <div v-if="user && !selectedLoan">
     <h2>Dashboard</h2>
-    <button @click="logout">Logout</button>
+	<button @click="currentView = 'dashboard'">Dashboard</button>
+	<button @click="currentView = 'borrowers'; loadBorrowers()">Borrowers</button>
+	<button @click="logout">Logout</button>
 
     <h3>Add Loan</h3>
     <input v-model="borrowerName" placeholder="Borrower Name">
@@ -39,6 +41,27 @@
       <button @click="openLoan(loan)">View</button>
     </div>
   </div>
+  
+    <!-- BORROWERS PAGE -->
+    <div v-if="user && currentView === 'borrowers'">
+
+      <h2>Borrowers</h2>
+
+      <h3>Add Borrower</h3>
+      <input v-model="newBorrower.firstname" placeholder="First Name">
+      <input v-model="newBorrower.lastname" placeholder="Last Name">
+      <input v-model="newBorrower.occupation" placeholder="Occupation">
+      <input v-model="newBorrower.city" placeholder="City">
+      <button @click="addBorrower">Add</button>
+
+      <h3>List</h3>
+      <div class="card" v-for="b in borrowers" :key="b.id">
+        <b>{{ b.firstname }} {{ b.lastname }}</b><br>
+        {{ b.occupation }}<br>
+        {{ b.city }}
+      </div>
+
+    </div>  
 
   <!-- LOAN DETAILS -->
   <div v-if="selectedLoan">
@@ -79,22 +102,36 @@ const supabase = createClient(
 const { createApp } = Vue;
 
 createApp({
-  data() {
-    return {
-      email: "",
-      password: "",
-      user: null,
+	data() {
+	  return {
+		// Auth
+		email: "",
+		password: "",
+		user: null,
 
-      borrowerName: "",
-      amount: "",
+		// Navigation
+		currentView: "dashboard",
 
-      loans: [],
-      selectedLoan: null,
-      breakdowns: [],
+		// Loans
+		borrowerName: "",
+		amount: "",
+		loans: [],
+		selectedLoan: null,
+		breakdowns: [],
 
-      paymentInput: {}
-    };
-  },
+		// Payments
+		paymentInput: {},
+
+		// Borrowers page
+		borrowers: [],
+		newBorrower: {
+		  firstname: "",
+		  lastname: "",
+		  occupation: "",
+		  city: ""
+		}
+	  };
+	},
 
   async mounted() {
     const { data } = await supabase.auth.getUser();
@@ -188,7 +225,32 @@ createApp({
       });
 
       this.openLoan(this.selectedLoan);
-    }
+    },
+
+    async loadBorrowers() {
+      const { data } = await supabase
+        .from("borrowers")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      this.borrowers = data || [];
+    },
+
+    async addBorrower() {
+      await supabase.from("borrowers").insert({
+        ...this.newBorrower,
+        user_id: this.user.id
+      });
+
+      this.newBorrower = {
+        firstname: "",
+        lastname: "",
+        occupation: "",
+        city: ""
+      };
+
+      this.loadBorrowers();
+    }    
   }
 }).mount("#app");
 </script>
