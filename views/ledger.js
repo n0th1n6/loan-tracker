@@ -27,10 +27,15 @@ export default {
           id,
           amount,
           total_amount,
+          payment_start_date,
+          payment_terms,
+          loan_purpose,
+          is_semi_monthly,
+          bill_day_1,
+          bill_day_2,
           breakdowns (
             id,
             amount,
-            paid_amount,
             due_date,
             status,
             payments (
@@ -117,7 +122,7 @@ export default {
           <div><b>Total:</b> ₱{{ loan.total_amount }}</div>
           <div><b>Balance:</b> ₱{{ calcLoanBalance(loan) }}</div>
 
-          <div><b>Start Date:</b> {{ loan.payment_start_date }}</div>
+          <div><b>Start Date:</b> {{ formatDate(loan.payment_start_date) }}</div>
           <div><b>Terms:</b> {{ loan.payment_terms }} months</div>
 
           <div><b>Payment Type:</b>
