@@ -3,11 +3,12 @@ import Dashboard from "./views/dashboard.js";
 import Borrowers from "./views/borrowers.js";
 import LoanForm from "./views/loanForm.js";
 import Ledger from "./views/ledger.js";
+import Outstanding from "./views/outstanding.js";
 
 const { createApp } = Vue;
 
 createApp({
-  components: { Dashboard, Borrowers, LoanForm, Ledger },
+  components: { Dashboard, Borrowers, LoanForm, Ledger, Outstanding },
   data() {
     return {
       user: null,
@@ -55,6 +56,7 @@ createApp({
 
           <button @click="currentView='dashboard'">Dashboard</button>
           <button @click="currentView='borrowers'">Borrowers</button>
+          <button @click="currentView='Outstanding'">Outstanding Loans</button>
 
           <hr>
           <button @click="logout">Logout</button>
