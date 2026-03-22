@@ -126,6 +126,7 @@ export default {
 
           <button @click="openBorrower(b)">Edit</button>
           <button @click="addLoanFromBorrower(b)">Add Loan</button>
+          <button @click="$emit('open-ledger', b)">Ledger</button>
 
         </div>
 
@@ -191,7 +192,6 @@ export default {
 
         <h3>Actions</h3>
         <button @click="goToAddLoan">Add Loan</button>
-        <button @click="$emit('open-ledger', b)">Ledger</button>
 
       </div>
 

@@ -10,6 +10,11 @@ export default {
   },
 
   async mounted() {
+    if (!this.borrower) {
+      console.error("No borrower passed to ledger");
+      return;
+    }    
+    
     this.loadLedger();
   },
 
@@ -43,7 +48,15 @@ export default {
       let totalPaid = 0;
 
       loan.breakdowns.forEach(b => {
-        totalPaid += Number(b.paid_amount || 0);
+        let paid = 0;
+
+        if (b.payments) {
+          b.payments.forEach(p => {
+            paid += Number(p.amount);
+          });
+        }
+
+        totalPaid += paid;
       });
 
       return loan.total_amount - totalPaid;
@@ -77,7 +90,9 @@ export default {
   <div>
 
     <h2>Ledger</h2>
-    <p><b>{{ borrower.firstname }} {{ borrower.lastname }}</b></p>
+    <p v-if="borrower">
+      <b>{{ borrower.firstname }} {{ borrower.lastname }}</b>
+    </p>
 
     <div v-for="loan in loans" :key="loan.id" class="card">
 
