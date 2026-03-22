@@ -5,17 +5,18 @@ import LoanForm from "./views/loanForm.js";
 import Ledger from "./views/ledger.js";
 import Outstanding from "./views/outstanding.js";
 import Capital from "./views/capital.js";
+import CashFlow from "./views/cashflow.js";
 
 const { createApp } = Vue;
 
 createApp({
-  components: { Dashboard, Borrowers, LoanForm, Ledger, Outstanding, Capital },
+  components: { Dashboard, Borrowers, LoanForm, Ledger, Outstanding, Capital, CashFlow },
   data() {
     return {
       user: null,
       email: "",
       password: "",
-      currentView: "dashboard",
+      currentView: "Dashboard",
       selectedBorrower: null
     };
   },
@@ -53,12 +54,13 @@ createApp({
 
         <!-- SIDEBAR -->
         <div class="sidebar">
-          <h2>Loan App</h2>
+          <h2>Rochelli Loan Tracker</h2>
 
           <button @click="currentView='dashboard'">Dashboard</button>
+          <button @click="currentView='Capital'">Capital</button>
+          <button @click="currentView='CashFlow'">Cash Flow</button>
           <button @click="currentView='borrowers'">Borrowers</button>
           <button @click="currentView='Outstanding'">Outstanding Loans</button>
-          <button @click="currentView='Capital'">Capital</button>
 
           <hr>
           <button @click="logout">Logout</button>
