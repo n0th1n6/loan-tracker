@@ -83,6 +83,13 @@ export default {
       a.href = url;
       a.download = "ledger.csv";
       a.click();
+    },
+    getPaid(b) {
+      let total = 0;
+      if (b.payments) {
+        b.payments.forEach(p => total += Number(p.amount));
+      }
+      return total;
     }    
   },
 
@@ -100,21 +107,28 @@ export default {
       <p>Total: {{ loan.total_amount }}</p>
       <p>Balance: {{ calcLoanBalance(loan) }}</p>
 
-      <table border="1" width="100%">
-        <tr>
-          <th>Due Date</th>
-          <th>Amount</th>
-          <th>Paid</th>
-          <th>Status</th>
-        </tr>
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>Due Date</th>
+            <th>Amount</th>
+            <th>Paid</th>
+            <th>Status</th>
+          </tr>
+        </thead>
 
-        <tr v-for="b in loan.breakdowns" :key="b.id">
-          <td>{{ b.due_date }}</td>
-          <td>{{ b.amount }}</td>
-          <td>{{ b.paid_amount }}</td>
-          <td>{{ b.status }}</td>
-        </tr>
-
+        <tbody>
+          <tr v-for="b in loan.breakdowns" :key="b.id">
+            <td>{{ b.due_date }}</td>
+            <td>{{ b.amount }}</td>
+            <td>{{ getPaid(b) }}</td>
+            <td>
+              <span :class="'status ' + b.status">
+                {{ b.status || 'pending' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
       </table>
 
       <button @click="exportCSV">Export CSV</button>

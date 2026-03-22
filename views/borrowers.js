@@ -5,6 +5,7 @@ export default {
   data() {
     return {
       borrowers: [],
+      showForm: false,
       selectedBorrower: null,
 
       form: {
@@ -54,7 +55,24 @@ export default {
     goToAddLoan() {
       alert("Next step: link this to loan creation");
     },
-    addLoanFromBorrower(b) {
+    async addLoanFromBorrower(b) {
+
+      const { data, error } = await supabase
+        .from("loans")
+        .select("id, status")
+        .eq("borrower_id", b.id)
+        .eq("status", "active");
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      if (data.length > 0) {
+        alert("Borrower still has an active loan");
+        return;
+      }
+
       this.$emit("open-loan-form", b);
     }
   },
@@ -64,72 +82,77 @@ export default {
       <h2>Borrowers</h2>
 
       <!-- LIST VIEW -->
-      <div v-if="!selectedBorrower">
+      <button @click="showForm = !showForm">
+        {{ showForm ? 'Cancel' : 'Add Borrower' }}
+      </button>
+      <div v-if="showForm" class="form">
+        <div v-if="!selectedBorrower">
 
-        <h3>Add Borrower</h3>
-        <div class="form">
+          <h3>Add Borrower</h3>
+          <div class="form">
 
-          <div class="form-group">
-            <label>First Name</label>
-            <input v-model="form.firstname" placeholder="e.g. Juan">
+            <div class="form-group">
+              <label>First Name</label>
+              <input v-model="form.firstname" placeholder="e.g. Juan">
+            </div>
+
+            <div class="form-group">
+              <label>Last Name</label>
+              <input v-model="form.lastname" placeholder="e.g. Dela Cruz">
+            </div>
+
+            <div class="form-group">
+              <label>Occupation</label>
+              <input v-model="form.occupation" placeholder="e.g. Driver">
+            </div>
+
+            <div class="form-group">
+              <label>Address 1</label>
+              <input v-model="form.address1" placeholder="Street / House No.">
+            </div>
+
+            <div class="form-group">
+              <label>Address 2</label>
+              <input v-model="form.address2" placeholder="Subdivision / Building">
+            </div>
+
+            <div class="form-group">
+              <label>Barangay</label>
+              <input v-model="form.barangay" placeholder="Barangay name">
+            </div>
+
+            <div class="form-group">
+              <label>City</label>
+              <input v-model="form.city" placeholder="City / Municipality">
+            </div>
+
+            <div class="form-group">
+              <label>Province</label>
+              <input v-model="form.province" placeholder="Province">
+            </div>
+
+            <div class="form-group">
+              <label>Country</label>
+              <input v-model="form.country" placeholder="Country">
+            </div>
+
+            <button @click="add">Add Borrower</button>
+
           </div>
 
-          <div class="form-group">
-            <label>Last Name</label>
-            <input v-model="form.lastname" placeholder="e.g. Dela Cruz">
-          </div>
+          <h3>List</h3>
+          <div class="card" v-for="b in borrowers" :key="b.id">
 
-          <div class="form-group">
-            <label>Occupation</label>
-            <input v-model="form.occupation" placeholder="e.g. Driver">
-          </div>
+            <b>{{ b.firstname }} {{ b.lastname }}</b><br>
+            {{ b.city }}<br><br>
 
-          <div class="form-group">
-            <label>Address 1</label>
-            <input v-model="form.address1" placeholder="Street / House No.">
-          </div>
+            <button @click="openBorrower(b)">Edit</button>
+            <button @click="addLoanFromBorrower(b)">Add Loan</button>
+            <button @click="$emit('open-ledger', b)">Ledger</button>
 
-          <div class="form-group">
-            <label>Address 2</label>
-            <input v-model="form.address2" placeholder="Subdivision / Building">
           </div>
-
-          <div class="form-group">
-            <label>Barangay</label>
-            <input v-model="form.barangay" placeholder="Barangay name">
-          </div>
-
-          <div class="form-group">
-            <label>City</label>
-            <input v-model="form.city" placeholder="City / Municipality">
-          </div>
-
-          <div class="form-group">
-            <label>Province</label>
-            <input v-model="form.province" placeholder="Province">
-          </div>
-
-          <div class="form-group">
-            <label>Country</label>
-            <input v-model="form.country" placeholder="Country">
-          </div>
-
-          <button @click="add">Add Borrower</button>
 
         </div>
-
-        <h3>List</h3>
-        <div class="card" v-for="b in borrowers" :key="b.id">
-
-          <b>{{ b.firstname }} {{ b.lastname }}</b><br>
-          {{ b.city }}<br><br>
-
-          <button @click="openBorrower(b)">Edit</button>
-          <button @click="addLoanFromBorrower(b)">Add Loan</button>
-          <button @click="$emit('open-ledger', b)">Ledger</button>
-
-        </div>
-
       </div>
 
       <!-- DETAIL VIEW -->
