@@ -58,3 +58,61 @@ button:hover {
 .link:hover {
   color: #40739e;
 }
+
+/* Layout */
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background: #273c75;
+  color: white;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  color: white;
+}
+
+.sidebar button {
+  width: 100%;
+  margin-bottom: 10px;
+  background: #40739e;
+}
+
+.sidebar button:hover {
+  background: #4b7bec;
+}
+
+.main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Form */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 3px;
+}
+
+.form-group input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #273c75;
+  box-shadow: 0 0 3px rgba(39, 60, 117, 0.5);
+}

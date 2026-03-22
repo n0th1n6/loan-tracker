@@ -36,6 +36,7 @@ createApp({
   },
   template: `
     <div>
+
       <div v-if="!user">
         <h2>Login</h2>
         <input v-model="email" placeholder="Email">
@@ -43,13 +44,26 @@ createApp({
         <button @click="login">Login</button>
       </div>
 
-      <div v-else>
-        <button @click="currentView='dashboard'">Dashboard</button>
-        <button @click="currentView='borrowers'">Borrowers</button>
-        <button @click="logout">Logout</button>
+      <div v-else class="layout">
 
-        <component :is="currentView" :user="user" />
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+          <h2>Loan App</h2>
+
+          <button @click="currentView='dashboard'">Dashboard</button>
+          <button @click="currentView='borrowers'">Borrowers</button>
+
+          <hr>
+          <button @click="logout">Logout</button>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+          <component :is="currentView" :user="user" />
+        </div>
+
       </div>
+
     </div>
   `
 }).mount("#app");
