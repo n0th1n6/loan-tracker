@@ -53,6 +53,10 @@ export default {
         .select()
         .single();
 
+      await supabase.rpc("recalc_loan", {
+        p_loan_id: loan.id
+      });
+
       await supabase.rpc("generate_breakdowns", {
         p_loan_id: loan.id
       });

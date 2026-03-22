@@ -191,6 +191,7 @@ export default {
 
         <h3>Actions</h3>
         <button @click="goToAddLoan">Add Loan</button>
+        <button @click="$emit('open-ledger', b)">Ledger</button>
 
       </div>
 

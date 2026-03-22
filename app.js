@@ -2,11 +2,12 @@ import { supabase } from "./supabase.js";
 import Dashboard from "./views/dashboard.js";
 import Borrowers from "./views/borrowers.js";
 import LoanForm from "./views/loanForm.js";
+import Ledger from "./views/ledger.js";
 
 const { createApp } = Vue;
 
 createApp({
-  components: { Dashboard, Borrowers, LoanForm },
+  components: { Dashboard, Borrowers, LoanForm, Ledger },
   data() {
     return {
       user: null,
@@ -65,8 +66,10 @@ createApp({
             :is="currentView" 
             :user="user"
             :borrower="selectedBorrower"
+
             @open-loan-form="b => { selectedBorrower = b; currentView = 'LoanForm'; }"
-          />          
+            @open-ledger="b => { selectedBorrower = b; currentView = 'Ledger'; }"
+          />      
         </div>
 
       </div>
