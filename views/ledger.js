@@ -47,7 +47,30 @@ export default {
       });
 
       return loan.total_amount - totalPaid;
-    }
+    },
+    exportCSV() {
+      let rows = ["Loan,Due Date,Amount,Paid,Status"];
+
+      this.loans.forEach(loan => {
+        loan.breakdowns.forEach(b => {
+          rows.push([
+            loan.id,
+            b.due_date,
+            b.amount,
+            b.paid_amount,
+            b.status
+          ].join(","));
+        });
+      });
+
+      const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ledger.csv";
+      a.click();
+    }    
   },
 
   template: `
