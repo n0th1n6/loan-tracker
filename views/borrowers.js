@@ -105,7 +105,18 @@ export default {
 
       const { error } = await supabase
         .from("borrowers")
-        .update(this.selectedBorrower)
+        .update({
+          firstname: this.selectedBorrower.firstname,
+          lastname: this.selectedBorrower.lastname,
+          contact_number: this.selectedBorrower.contact_number,
+          occupation: this.selectedBorrower.occupation,
+          address1: this.selectedBorrower.address1,
+          address2: this.selectedBorrower.address2,
+          barangay: this.selectedBorrower.barangay,
+          city: this.selectedBorrower.city,
+          province: this.selectedBorrower.province,
+          country: this.selectedBorrower.country
+        })
         .eq("id", this.selectedBorrower.id);
 
       if (error) {
