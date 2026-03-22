@@ -47,11 +47,9 @@ export default {
       let paid = 0;
 
       loan.breakdowns.forEach(b => {
-        if (b.payments) {
-          b.payments.forEach(p => {
-            paid += Number(p.amount);
-          });
-        }
+        (b.payments || []).forEach(p => {
+          paid += Number(p.amount);
+        });
       });
 
       return loan.total_amount - paid;
@@ -72,22 +70,14 @@ export default {
         lastname: loan.borrowers.lastname
       });
     },
+
     formatDate(d) {
       if (!d || d === "-") return "-";
       return new Date(d).toLocaleDateString();
     },
 
+    // 🔥 NEW PROPER PAYMENT ENGINE
     async payLoan(loan) {
-
-      // find next unpaid breakdown
-      const next = loan.breakdowns
-        .filter(b => b.status !== "paid")
-        .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))[0];
-
-      if (!next) {
-        alert("No pending payments");
-        return;
-      }
 
       const amount = prompt("Enter payment amount:");
 
@@ -96,36 +86,58 @@ export default {
         return;
       }
 
-      const value = parseFloat(amount);
+      let remaining = parseFloat(amount);
 
-      // insert payment
-      const { error } = await supabase
-        .from("payments")
-        .insert({
-          breakdown_id: next.id,
-          amount: value
-        });
+      // sort breakdowns by due date
+      const breakdowns = loan.breakdowns
+        .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
 
-      if (error) {
-        console.error(error);
-        alert("Payment failed");
-        return;
-      }
+      for (let b of breakdowns) {
 
-      // 🔥 update breakdown status (simple logic)
-      const totalPaid = (next.payments || []).reduce((s, p) => s + Number(p.amount), 0) + value;
+        if (remaining <= 0) break;
 
-      if (totalPaid >= next.amount) {
+        const alreadyPaid = (b.payments || []).reduce((s, p) => s + Number(p.amount), 0);
+        const balance = b.amount - alreadyPaid;
+
+        if (balance <= 0) continue;
+
+        const payAmount = Math.min(balance, remaining);
+
+        // insert payment
+        const { error } = await supabase
+          .from("payments")
+          .insert({
+            breakdown_id: b.id,
+            amount: payAmount
+          });
+
+        if (error) {
+          console.error(error);
+          alert("Payment failed");
+          return;
+        }
+
+        const newPaid = alreadyPaid + payAmount;
+
+        // update status
         await supabase
           .from("breakdowns")
-          .update({ status: "paid" })
-          .eq("id", next.id);
+          .update({
+            status: newPaid >= b.amount ? "paid" : "pending"
+          })
+          .eq("id", b.id);
+
+        remaining -= payAmount;
       }
 
-      alert("Payment recorded");
+      if (remaining > 0) {
+        alert("Payment exceeds total due. Excess ignored.");
+      }
 
-      this.load(); // refresh
-    }    
+      alert("Payment applied successfully");
+
+      this.load();
+    }
 
   },
 
