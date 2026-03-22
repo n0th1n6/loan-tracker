@@ -5,7 +5,8 @@ export default {
 
   data() {
     return {
-      loans: []
+      loans: [],
+      expanded: {} // 🔥 NEW
     };
   },
 
@@ -66,7 +67,6 @@ export default {
       return loan.total_amount - totalPaid;
     },
 
-    // 🔥 FIXED CSV (uses getPaid)
     exportCSV() {
       let rows = ["Loan,Due Date,Amount,Paid,Status"];
 
@@ -102,7 +102,6 @@ export default {
       return new Date(d).toLocaleDateString();
     },
 
-    // 🔥 RUNNING BALANCE
     getRunningBalances(loan) {
       let balance = loan.total_amount;
       const result = {};
@@ -116,7 +115,6 @@ export default {
       return result;
     },
 
-    // 🔥 OVERDUE DETECTION
     getStatus(b) {
       if (b.status === "paid") return "paid";
 
@@ -128,7 +126,11 @@ export default {
       return "pending";
     },
 
-    // 🔥 PROPER PAYMENT ENGINE (CASCADE)
+    // 🔥 NEW: toggle payment history
+    togglePayments(b) {
+      this.expanded[b.id] = !this.expanded[b.id];
+    },
+
     async payBreakdown(selectedBreakdown) {
 
       const amount = prompt(
@@ -142,7 +144,6 @@ export default {
 
       let remaining = parseFloat(amount);
 
-      // find parent loan
       const loan = this.loans.find(l =>
         l.breakdowns.some(b => b.id === selectedBreakdown.id)
       );
@@ -207,7 +208,6 @@ export default {
 
     <div v-for="loan in loans" :key="loan.id" class="card">
 
-      <!-- INIT RUNNING BALANCE -->
       <div v-if="!loan._balances">
         {{ loan._balances = getRunningBalances(loan) }}
       </div>
@@ -255,31 +255,76 @@ export default {
 
         <tbody>
 
-          <tr v-for="b in loan.breakdowns" :key="b.id">
+          <template v-for="b in loan.breakdowns" :key="b.id">
 
-            <td>{{ formatDate(b.due_date) }}</td>
+            <!-- MAIN ROW -->
+            <tr @click="togglePayments(b)" style="cursor:pointer">
 
-            <td class="right">₱{{ b.amount }}</td>
+              <td>{{ formatDate(b.due_date) }}</td>
 
-            <td class="right">₱{{ getPaid(b) }}</td>
+              <td class="right">₱{{ b.amount }}</td>
 
-            <td class="right">
-              ₱{{ loan._balances[b.id]?.toFixed(2) }}
-            </td>
+              <td class="right">₱{{ getPaid(b) }}</td>
 
-            <td>
-              <span :class="'status ' + getStatus(b)">
-                {{ getStatus(b) }}
-              </span>
-            </td>
+              <td class="right">
+                ₱{{ loan._balances[b.id]?.toFixed(2) }}
+              </td>
 
-            <td>
-              <span class="link" @click="payBreakdown(b)">
-                Pay
-              </span>
-            </td>
+              <td>
+                <span :class="'status ' + getStatus(b)">
+                  {{ getStatus(b) }}
+                </span>
+              </td>
 
-          </tr>
+              <td>
+                <span 
+                  v-if="getPaid(b) < b.amount"
+                  class="link"
+                  @click.stop="payBreakdown(b)"
+                >
+                  Pay
+                </span>
+
+                <span v-else style="color:#999;">
+                  Paid
+                </span>
+              </td>
+
+            </tr>
+
+            <!-- EXPANDED PAYMENT HISTORY -->
+            <tr v-if="expanded[b.id]">
+
+              <td colspan="6">
+
+                <div style="padding:10px; background:#f9fafb; border-radius:6px;">
+
+                  <b>Payments:</b>
+
+                  <div v-if="!b.payments || b.payments.length === 0">
+                    No payments yet
+                  </div>
+
+                  <div v-else>
+
+                    <div 
+                      v-for="(p, i) in b.payments" 
+                      :key="i"
+                      style="display:flex; justify-content:space-between; padding:4px 0;"
+                    >
+                      <span>{{ formatDate(p.payment_date) }}</span>
+                      <span>₱{{ p.amount }}</span>
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          </template>
 
         </tbody>
 
