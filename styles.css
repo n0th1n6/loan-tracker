@@ -227,3 +227,8 @@ button:hover {
   background: #fdecea;
   color: #c0392b;
 }
+
+/* positive vs negative */
+td span {
+  font-weight: 500;
+}
