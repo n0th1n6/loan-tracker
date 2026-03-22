@@ -1,98 +1,115 @@
+/* =========================
+   BASE
+========================= */
 body {
-  font-family: Arial, sans-serif;
-  background: #f5f6fa;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  background: #f7f9fc;
+  color: #2d3436;
   margin: 0;
-  padding: 20px;
+  padding: 0;
 }
 
 h2 {
   color: #2f3640;
+  margin-bottom: 10px;
 }
 
-input {
+/* =========================
+   INPUTS
+========================= */
+input, select {
   padding: 8px;
-  margin: 5px;
-  border: 1px solid #ccc;
+  border: 1px solid #dcdde1;
   border-radius: 6px;
+  background: #ffffff;
+  transition: all 0.2s ease;
 }
 
+input:focus, select:focus {
+  outline: none;
+  border-color: #74b9ff;
+  box-shadow: 0 0 4px rgba(116, 185, 255, 0.4);
+}
+
+/* =========================
+   BUTTONS
+========================= */
 button {
   padding: 8px 12px;
-  margin: 5px;
+  margin: 5px 5px 5px 0;
   border: none;
-  background: #273c75;
+  background: #74b9ff;
   color: white;
   border-radius: 6px;
   cursor: pointer;
+  transition: 0.2s ease;
 }
 
 button:hover {
-  background: #40739e;
+  background: #0984e3;
 }
 
+/* =========================
+   CARDS
+========================= */
 .card {
-  background: white;
-  padding: 10px;
+  background: #ffffff;
+  padding: 12px;
   margin: 10px 0;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  border: 1px solid #eaecef;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  max-width: 400px;
-}
-
-.form input {
-  margin-bottom: 10px;
-  width: 100%;
-}
-
-.link {
-  color: #273c75;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.link:hover {
-  color: #40739e;
-}
-
-/* Layout */
+/* =========================
+   LAYOUT
+========================= */
 .layout {
   display: flex;
   height: 100vh;
 }
 
+/* Sidebar (lighter, softer) */
 .sidebar {
   width: 220px;
-  background: #273c75;
-  color: white;
+  background: #eef3fb;
+  color: #2d3436;
   padding: 20px;
+  border-right: 1px solid #dfe6e9;
 }
 
 .sidebar h2 {
-  color: white;
+  color: #2d3436;
 }
 
 .sidebar button {
   width: 100%;
   margin-bottom: 10px;
-  background: #40739e;
+  background: #dfe6ff;
+  color: #2d3436;
 }
 
 .sidebar button:hover {
-  background: #4b7bec;
+  background: #c7d2fe;
 }
 
+/* Main content */
 .main {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
 }
 
-/* Form */
+/* =========================
+   FORM
+========================= */
+.form {
+  display: flex;
+  flex-direction: column;
+  max-width: 450px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -101,67 +118,107 @@ button:hover {
 
 .form-group label {
   font-size: 12px;
-  color: #555;
-  margin-bottom: 3px;
+  color: #636e72;
+  margin-bottom: 4px;
 }
 
-.form-group input {
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+/* =========================
+   LINKS
+========================= */
+.link {
+  color: #0984e3;
+  cursor: pointer;
+  text-decoration: none;
 }
 
-.form-group input:focus {
-  outline: none;
-  border-color: #273c75;
-  box-shadow: 0 0 3px rgba(39, 60, 117, 0.5);
+.link:hover {
+  text-decoration: underline;
 }
 
-/* Table */
+/* =========================
+   LOAN HEADER
+========================= */
+.loan-header {
+  background: #ffffff;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #eaecef;
+  margin-bottom: 10px;
+}
+
+.loan-title {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+/* Grid for loan details */
+.loan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 12px;
+  font-size: 13px;
+}
+
+/* =========================
+   TABLE (LEDGER)
+========================= */
 .ledger-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+  font-size: 13px;
 }
 
 .ledger-table th {
-  background: #273c75;
-  color: white;
+  background: #eaf2ff;
+  color: #2d3436;
   padding: 10px;
   text-align: left;
+  border-bottom: 1px solid #dfe6e9;
 }
 
 .ledger-table td {
   padding: 10px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #f1f2f6;
 }
 
-/* Zebra rows */
+/* Zebra */
 .ledger-table tr:nth-child(even) {
-  background: #f5f6fa;
+  background: #fafbfc;
 }
 
 /* Hover */
 .ledger-table tr:hover {
-  background: #dcdde1;
+  background: #f1f5ff;
 }
 
-/* Status badges */
+/* Right align numbers */
+.right {
+  text-align: right;
+}
+
+/* =========================
+   STATUS BADGES
+========================= */
 .status {
   padding: 4px 8px;
   border-radius: 6px;
-  font-size: 12px;
-  color: white;
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .status.paid {
-  background: #44bd32;
+  background: #d4f8e8;
+  color: #1b5e20;
 }
 
 .status.pending {
-  background: #e1b12c;
+  background: #fff4d6;
+  color: #8a6d1d;
 }
 
 .status.overdue {
-  background: #e84118;
+  background: #fdecea;
+  color: #c0392b;
 }

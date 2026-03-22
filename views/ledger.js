@@ -90,6 +90,9 @@ export default {
         b.payments.forEach(p => total += Number(p.amount));
       }
       return total;
+    },
+    formatDate(d) {
+      return new Date(d).toLocaleDateString();
     }    
   },
 
@@ -103,11 +106,36 @@ export default {
 
     <div v-for="loan in loans" :key="loan.id" class="card">
 
-      <h3>Loan: {{ loan.amount }}</h3>
-      <p>Total: {{ loan.total_amount }}</p>
-      <p>Balance: {{ calcLoanBalance(loan) }}</p>
+      <div class="loan-header">
+
+        <div class="loan-title">
+          Loan Amount: ₱{{ loan.amount }}
+        </div>
+
+        <div class="loan-grid">
+
+          <div><b>Total:</b> ₱{{ loan.total_amount }}</div>
+          <div><b>Balance:</b> ₱{{ calcLoanBalance(loan) }}</div>
+
+          <div><b>Start Date:</b> {{ loan.payment_start_date }}</div>
+          <div><b>Terms:</b> {{ loan.payment_terms }} months</div>
+
+          <div><b>Payment Type:</b>
+            {{ loan.is_semi_monthly ? 'Semi-Monthly' : 'Monthly' }}
+          </div>
+
+          <div v-if="loan.is_semi_monthly">
+            <b>Bill Days:</b> {{ loan.bill_day_1 }} / {{ loan.bill_day_2 }}
+          </div>
+
+          <div><b>Purpose:</b> {{ loan.loan_purpose || '-' }}</div>
+
+        </div>
+
+      </div>
 
       <table class="ledger-table">
+
         <thead>
           <tr>
             <th>Due Date</th>
@@ -119,16 +147,26 @@ export default {
 
         <tbody>
           <tr v-for="b in loan.breakdowns" :key="b.id">
-            <td>{{ b.due_date }}</td>
-            <td>{{ b.amount }}</td>
-            <td>{{ getPaid(b) }}</td>
+
+            <td>{{ formatDate(b.due_date) }}</td>
+
+            <td class="right">
+              ₱{{ b.amount }}
+            </td>
+
+            <td class="right">
+              ₱{{ getPaid(b) }}
+            </td>
+
             <td>
-              <span :class="'status ' + b.status">
+              <span :class="'status ' + (b.status || 'pending')">
                 {{ b.status || 'pending' }}
               </span>
             </td>
+
           </tr>
         </tbody>
+
       </table>
 
       <button @click="exportCSV">Export CSV</button>
