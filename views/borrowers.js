@@ -12,6 +12,7 @@ export default {
       form: {
         firstname: "",
         lastname: "",
+        contact_number: "", // 🔥 NEW
         occupation: "",
         address1: "",
         address2: "",
@@ -59,6 +60,7 @@ export default {
       this.form = {
         firstname: "",
         lastname: "",
+        contact_number: "", // 🔥 NEW
         occupation: "",
         address1: "",
         address2: "",
@@ -189,6 +191,11 @@ export default {
       </div>
 
       <div class="form-group">
+        <label>Contact Number</label>
+        <input v-model="form.contact_number">
+      </div>
+
+      <div class="form-group">
         <label>Occupation</label>
         <input v-model="form.occupation">
       </div>
@@ -299,10 +306,55 @@ export default {
 
       <div class="form">
 
-        <input v-model="selectedBorrower.firstname">
-        <input v-model="selectedBorrower.lastname">
-        <input v-model="selectedBorrower.occupation">
-        <input v-model="selectedBorrower.city">
+        <div class="form-group">
+          <label>First Name</label>
+          <input v-model="selectedBorrower.firstname">
+        </div>
+
+        <div class="form-group">
+          <label>Last Name</label>
+          <input v-model="selectedBorrower.lastname">
+        </div>
+
+        <div class="form-group">
+          <label>Contact Number</label>
+          <input v-model="selectedBorrower.contact_number">
+        </div>
+
+        <div class="form-group">
+          <label>Occupation</label>
+          <input v-model="selectedBorrower.occupation">
+        </div>
+
+        <div class="form-group">
+          <label>Address 1</label>
+          <input v-model="selectedBorrower.address1">
+        </div>
+
+        <div class="form-group">
+          <label>Address 2</label>
+          <input v-model="selectedBorrower.address2">
+        </div>
+
+        <div class="form-group">
+          <label>Barangay</label>
+          <input v-model="selectedBorrower.barangay">
+        </div>
+
+        <div class="form-group">
+          <label>City</label>
+          <input v-model="selectedBorrower.city">
+        </div>
+
+        <div class="form-group">
+          <label>Province</label>
+          <input v-model="selectedBorrower.province">
+        </div>
+
+        <div class="form-group">
+          <label>Country</label>
+          <input v-model="selectedBorrower.country">
+        </div>
 
         <button @click="updateBorrower">Save Changes</button>
 
