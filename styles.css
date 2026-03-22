@@ -37,3 +37,24 @@ button:hover {
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+
+.form {
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+}
+
+.form input {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.link {
+  color: #273c75;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link:hover {
+  color: #40739e;
+}
