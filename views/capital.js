@@ -8,13 +8,17 @@ export default {
       records: [],
       selected: null,
 
+      users: [],
+      capitalByUser: [],
+
       filterMonth: "",
 
       form: {
         amount: "",
         type: "in",
         notes: "",
-        entry_date: new Date().toISOString().slice(0, 10)
+        entry_date: new Date().toISOString().slice(0, 10),
+        user_id: null
       },
 
       totals: {
@@ -28,15 +32,19 @@ export default {
   async mounted() {
     await this.load();
     await this.loadLoanTotals();
+    await this.loadUsers();
+    await this.loadCapitalByUser();
+  },
+
+  computed: {
+    balances() {
+      return this.getRunningBalances(this.filteredRecords());
+    }
   },
 
   methods: {
 
-    // =====================
-    // LOAD DATA
-    // =====================
     async load() {
-
       const { data } = await supabase
         .from("capital")
         .select("*")
@@ -45,8 +53,23 @@ export default {
       this.records = data || [];
     },
 
-    async loadLoanTotals() {
+    async loadUsers() {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, email");
 
+      this.users = data || [];
+    },
+
+    async loadCapitalByUser() {
+      const { data } = await supabase
+        .from("capital_per_user")
+        .select("*");
+
+      this.capitalByUser = data || [];
+    },
+
+    async loadLoanTotals() {
       const { data: loans } = await supabase
         .from("loans")
         .select("amount");
@@ -60,12 +83,9 @@ export default {
       this.totals.lent = lent;
     },
 
-    // =====================
-    // ADD
-    // =====================
     async add() {
 
-      if (!this.user || !this.user.id) {
+      if (!this.user?.id) {
         alert("User not authenticated");
         return;
       }
@@ -76,7 +96,8 @@ export default {
       }
 
       const payload = {
-        user_id: this.user.id,
+        user_id: this.form.user_id || null,
+        created_by: this.user.id,
         amount: Number(this.form.amount),
         type: this.form.type,
         notes: this.form.notes || null,
@@ -93,12 +114,10 @@ export default {
       }
 
       this.resetForm();
-      this.load();
+      await this.load();
+      await this.loadCapitalByUser();
     },
 
-    // =====================
-    // EDIT
-    // =====================
     edit(r) {
       this.selected = { ...r };
     },
@@ -111,7 +130,8 @@ export default {
           amount: this.selected.amount,
           type: this.selected.type,
           notes: this.selected.notes,
-          entry_date: this.selected.entry_date
+          entry_date: this.selected.entry_date,
+          user_id: this.selected.user_id || null
         })
         .eq("id", this.selected.id);
 
@@ -121,12 +141,10 @@ export default {
       }
 
       this.selected = null;
-      this.load();
+      await this.load();
+      await this.loadCapitalByUser();
     },
 
-    // =====================
-    // DELETE
-    // =====================
     async remove(r) {
 
       if (!confirm("Delete this entry?")) return;
@@ -141,18 +159,17 @@ export default {
         return;
       }
 
-      this.load();
+      await this.load();
+      await this.loadCapitalByUser();
     },
 
-    // =====================
-    // HELPERS
-    // =====================
     resetForm() {
       this.form = {
         amount: "",
         type: "in",
         notes: "",
-        entry_date: new Date().toISOString().slice(0, 10)
+        entry_date: new Date().toISOString().slice(0, 10),
+        user_id: null
       };
     },
 
@@ -166,11 +183,7 @@ export default {
       });
     },
 
-    // =====================
-    // FILTER
-    // =====================
     filteredRecords() {
-
       if (!this.filterMonth) return this.records;
 
       return this.records.filter(r =>
@@ -178,9 +191,6 @@ export default {
       );
     },
 
-    // =====================
-    // BALANCE
-    // =====================
     getBalance() {
 
       let total = 0;
@@ -197,9 +207,6 @@ export default {
       return total;
     },
 
-    // =====================
-    // RUNNING BALANCE
-    // =====================
     getRunningBalances(list) {
 
       let balance = 0;
@@ -210,7 +217,6 @@ export default {
       );
 
       sorted.forEach(r => {
-
         balance += r.type === "in"
           ? Number(r.amount)
           : -Number(r.amount);
@@ -221,9 +227,6 @@ export default {
       return result;
     },
 
-    // =====================
-    // MONTHLY SUMMARY
-    // =====================
     getMonthlySummary() {
 
       const map = {};
@@ -257,11 +260,7 @@ export default {
 
     <h2>Capital Management</h2>
 
-    <!-- ===================== -->
-    <!-- SUMMARY -->
-    <!-- ===================== -->
     <div class="dashboard-grid">
-
       <div class="dash-card">
         <h4>Total Capital</h4>
         <div class="amount">₱{{ formatMoney(getBalance()) }}</div>
@@ -276,26 +275,17 @@ export default {
         <h4>Available Cash</h4>
         <div class="amount">₱{{ formatMoney(totals.available) }}</div>
       </div>
-
     </div>
 
-    <!-- ===================== -->
-    <!-- FILTER -->
-    <!-- ===================== -->
     <div class="card">
       <label>Filter Month</label>
       <input type="month" v-model="filterMonth">
     </div>
 
-    <!-- ===================== -->
-    <!-- FORM -->
-    <!-- ===================== -->
     <div class="card">
-
       <h3>Add Capital</h3>
 
       <div class="form">
-
         <input type="date" v-model="form.entry_date">
         <input v-model="form.amount" placeholder="Amount">
 
@@ -304,23 +294,23 @@ export default {
           <option value="out">Withdraw</option>
         </select>
 
+        <select v-model="form.user_id">
+          <option :value="null">External / No User</option>
+          <option v-for="u in users" :key="u.id" :value="u.id">
+            {{ u.email }}
+          </option>
+        </select>
+
         <input v-model="form.notes" placeholder="Notes">
 
         <button @click="add">Save</button>
-
       </div>
-
     </div>
 
-    <!-- ===================== -->
-    <!-- EDIT -->
-    <!-- ===================== -->
     <div v-if="selected" class="card">
-
       <h3>Edit Entry</h3>
 
       <div class="form">
-
         <input type="date" v-model="selected.entry_date">
         <input v-model="selected.amount">
 
@@ -329,28 +319,24 @@ export default {
           <option value="out">Withdraw</option>
         </select>
 
+        <select v-model="selected.user_id">
+          <option :value="null">External / No User</option>
+          <option v-for="u in users" :key="u.id" :value="u.id">
+            {{ u.email }}
+          </option>
+        </select>
+
         <input v-model="selected.notes">
 
         <button @click="update">Update</button>
         <button @click="selected=null">Cancel</button>
-
       </div>
-
     </div>
 
-    <!-- ===================== -->
-    <!-- LEDGER -->
-    <!-- ===================== -->
     <div class="card">
-
       <h3>Ledger</h3>
 
-      <div v-if="!_balances">
-        {{ _balances = getRunningBalances(filteredRecords()) }}
-      </div>
-
       <table class="ledger-table">
-
         <thead>
           <tr>
             <th>Date</th>
@@ -358,16 +344,14 @@ export default {
             <th class="right">Amount</th>
             <th class="right">Balance</th>
             <th>Notes</th>
+            <th>User</th>
             <th>Action</th>
           </tr>
         </thead>
 
         <tbody>
-
           <tr v-for="r in filteredRecords()" :key="r.id">
-
             <td>{{ formatDate(r.entry_date) }}</td>
-
             <td>{{ r.type }}</td>
 
             <td class="right">
@@ -375,33 +359,48 @@ export default {
             </td>
 
             <td class="right">
-              ₱{{ _balances[r.id]?.toFixed(2) }}
+              ₱{{ balances[r.id]?.toFixed(2) }}
             </td>
 
             <td>{{ r.notes }}</td>
 
             <td>
+              {{ users.find(u => u.id === r.user_id)?.email || 'External' }}
+            </td>
+
+            <td>
               <span class="link" @click="edit(r)">Edit</span> |
               <span class="link" @click="remove(r)">Delete</span>
             </td>
-
           </tr>
-
         </tbody>
-
       </table>
-
     </div>
 
-    <!-- ===================== -->
-    <!-- MONTHLY -->
-    <!-- ===================== -->
     <div class="card">
+      <h3>Capital by User</h3>
 
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th class="right">Total</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr v-for="u in capitalByUser" :key="u.user_id">
+            <td>{{ u.label }}</td>
+            <td class="right">₱{{ formatMoney(u.total) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
       <h3>Monthly Summary</h3>
 
       <table class="ledger-table">
-
         <thead>
           <tr>
             <th>Month</th>
@@ -412,20 +411,14 @@ export default {
         </thead>
 
         <tbody>
-
           <tr v-for="m in getMonthlySummary()" :key="m.month">
-
             <td>{{ m.month }}</td>
             <td class="right">₱{{ formatMoney(m.in) }}</td>
             <td class="right">₱{{ formatMoney(m.out) }}</td>
             <td class="right">₱{{ formatMoney(m.net) }}</td>
-
           </tr>
-
         </tbody>
-
       </table>
-
     </div>
 
   </div>
