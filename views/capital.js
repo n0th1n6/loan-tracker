@@ -50,7 +50,10 @@ export default {
         .select("*")
         .order("entry_date", { ascending: false });
 
-      this.records = data || [];
+      this.records = (data || []).map(r => ({
+        ...r,
+        entry_date: r.entry_date ? r.entry_date.slice(0, 10) : null
+      }));
     },
 
     async loadUsers() {
@@ -119,7 +122,12 @@ export default {
     },
 
     edit(r) {
-      this.selected = { ...r };
+      this.selected = {
+        ...r,
+        entry_date: r.entry_date
+          ? r.entry_date.slice(0, 10)
+          : new Date().toISOString().slice(0, 10)
+      };
     },
 
     async update() {
