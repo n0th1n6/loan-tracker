@@ -132,16 +132,27 @@ export default {
 
     async update() {
 
-      const { error } = await supabase
+      const safeDate = this.selected.entry_date
+        ? this.selected.entry_date
+        : new Date().toISOString().slice(0, 10);
+
+      const payload = {
+        amount: Number(this.selected.amount),
+        type: this.selected.type,
+        notes: this.selected.notes || null,
+        entry_date: safeDate,
+        user_id: this.selected.user_id || null
+      };
+
+      console.log("UPDATE PAYLOAD:", payload); // 🔥 DEBUG
+
+      const { data, error } = await supabase
         .from("capital")
-        .update({
-          amount: this.selected.amount,
-          type: this.selected.type,
-          notes: this.selected.notes,
-          entry_date: this.selected.entry_date,
-          user_id: this.selected.user_id || null
-        })
-        .eq("id", this.selected.id);
+        .update(payload)
+        .eq("id", this.selected.id)
+        .select(); // 🔥 IMPORTANT
+
+      console.log("UPDATE RESULT:", data, error); // 🔥 DEBUG
 
       if (error) {
         alert(error.message);
