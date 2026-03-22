@@ -30,9 +30,21 @@ export default {
   methods: {
 
     async load() {
+
       const { data, error } = await supabase
         .from("borrowers")
-        .select("*")
+        .select(`
+          *,
+          loans (
+            id,
+            status,
+            total_amount,
+            breakdowns (
+              amount,
+              payments (amount)
+            )
+          )
+        `)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -105,32 +117,46 @@ export default {
       this.load();
     },
 
-    // 🔥 RESTORED METHOD
     goToAddLoan() {
       if (!this.selectedBorrower) return;
-
       this.$emit("open-loan-form", this.selectedBorrower);
     },
 
     async addLoanFromBorrower(b) {
 
-      const { data, error } = await supabase
-        .from("loans")
-        .select("id")
-        .eq("borrower_id", b.id)
-        .eq("status", "active");
+      const hasActive = (b.loans || []).some(l => l.status === "active");
 
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      if (data.length > 0) {
+      if (hasActive) {
         alert("Borrower still has an active loan");
         return;
       }
 
       this.$emit("open-loan-form", b);
+    },
+
+    hasActiveLoan(b) {
+      return (b.loans || []).some(l => l.status === "active");
+    },
+
+    getBalance(b) {
+
+      let total = 0;
+
+      (b.loans || []).forEach(loan => {
+
+        let paid = 0;
+
+        (loan.breakdowns || []).forEach(bd => {
+          (bd.payments || []).forEach(p => {
+            paid += Number(p.amount);
+          });
+        });
+
+        total += (loan.total_amount || 0) - paid;
+
+      });
+
+      return total;
     }
 
   },
@@ -206,24 +232,65 @@ export default {
     <!-- ===================== -->
     <div v-if="!selectedBorrower">
 
-      <h3>Borrower List</h3>
+      <h3>Borrowers</h3>
 
-      <div class="card" v-for="b in borrowers" :key="b.id">
+      <table class="ledger-table">
 
-        <b>{{ b.firstname }} {{ b.lastname }}</b><br>
-        {{ b.city }}<br><br>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>City</th>
+            <th>Status</th>
+            <th class="right">Balance</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
 
-        <button @click="openBorrower(b)">Edit</button>
-        <button @click="addLoanFromBorrower(b)">Add Loan</button>
-        <button @click="$emit('open-ledger', b)">Ledger</button>
+        <tbody>
 
-      </div>
+          <tr v-for="b in borrowers" :key="b.id">
+
+            <td>
+              <span class="link" @click="openBorrower(b)">
+                {{ b.firstname }} {{ b.lastname }}
+              </span>
+            </td>
+
+            <td>{{ b.city || '-' }}</td>
+
+            <td>
+              <span 
+                class="status"
+                :class="hasActiveLoan(b) ? 'pending' : 'paid'"
+              >
+                {{ hasActiveLoan(b) ? 'Active Loan' : 'No Loan' }}
+              </span>
+            </td>
+
+            <td class="right">
+              ₱{{ getBalance(b).toFixed(2) }}
+            </td>
+
+            <td>
+              <span class="link" @click="addLoanFromBorrower(b)">
+                Add Loan
+              </span>
+              &nbsp;|&nbsp;
+              <span class="link" @click="$emit('open-ledger', b)">
+                Ledger
+              </span>
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
 
     </div>
 
     <!-- ===================== -->
     <!-- EDIT VIEW -->
-    <!-- ===================== -->
     <div v-if="selectedBorrower">
 
       <button @click="selectedBorrower = null">← Back</button>
@@ -232,10 +299,10 @@ export default {
 
       <div class="form">
 
-        <input v-model="selectedBorrower.firstname" placeholder="First name">
-        <input v-model="selectedBorrower.lastname" placeholder="Last name">
-        <input v-model="selectedBorrower.occupation" placeholder="Occupation">
-        <input v-model="selectedBorrower.city" placeholder="City">
+        <input v-model="selectedBorrower.firstname">
+        <input v-model="selectedBorrower.lastname">
+        <input v-model="selectedBorrower.occupation">
+        <input v-model="selectedBorrower.city">
 
         <button @click="updateBorrower">Save Changes</button>
 
