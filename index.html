@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Loan Tracker</title>
+  <script src="https://unpkg.com/vue@3"></script>
+  <style>
+    body { font-family: Arial; max-width: 800px; margin: auto; }
+    .card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    .paid { color: green; }
+    .overdue { color: red; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- LOGIN -->
+  <div v-if="!user">
+    <h2>Login</h2>
+    <input v-model="email" placeholder="Email"><br>
+    <input v-model="password" type="password" placeholder="Password"><br>
+    <button @click="login">Login</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div v-if="user && !selectedLoan">
+    <h2>Dashboard</h2>
+    <button @click="logout">Logout</button>
+
+    <h3>Add Loan</h3>
+    <input v-model="borrowerName" placeholder="Borrower Name">
+    <input v-model="amount" placeholder="Amount">
+    <button @click="addLoan">Add</button>
+
+    <h3>Loans</h3>
+    <div class="card" v-for="loan in loans" :key="loan.id">
+      <b>{{ loan.borrowers.firstname }} {{ loan.borrowers.lastname }}</b><br>
+      Amount: {{ loan.amount }}<br>
+      <button @click="openLoan(loan)">View</button>
+    </div>
+  </div>
+
+  <!-- LOAN DETAILS -->
+  <div v-if="selectedLoan">
+    <button @click="selectedLoan = null">← Back</button>
+
+    <h2>Loan Details</h2>
+    <p>
+      {{ selectedLoan.borrowers.firstname }} {{ selectedLoan.borrowers.lastname }}<br>
+      Amount: {{ selectedLoan.amount }}
+    </p>
+
+    <h3>Breakdowns</h3>
+    <div class="card" v-for="b in breakdowns" :key="b.id">
+      Due: {{ b.due_date }}<br>
+      Amount: {{ b.amount }}<br>
+      Paid: {{ b.paid_amount }}<br>
+
+      <span v-if="b.status === 'paid'" class="paid">PAID</span>
+      <span v-if="b.status === 'overdue'" class="overdue">OVERDUE</span>
+
+      <div v-if="b.status !== 'paid'">
+        <input v-model="paymentInput[b.id]" placeholder="Payment">
+        <button @click="pay(b)">Pay</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient(
+  "YOUR_SUPABASE_URL",
+  "YOUR_ANON_KEY"
+);
+
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      email: "",
+      password: "",
+      user: null,
+
+      borrowerName: "",
+      amount: "",
+
+      loans: [],
+      selectedLoan: null,
+      breakdowns: [],
+
+      paymentInput: {}
+    };
+  },
+
+  async mounted() {
+    const { data } = await supabase.auth.getUser();
+    this.user = data.user;
+    if (this.user) this.loadLoans();
+  },
+
+  methods: {
+    async login() {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: this.email,
+        password: this.password
+      });
+
+      if (error) alert(error.message);
+      else {
+        const { data } = await supabase.auth.getUser();
+        this.user = data.user;
+        this.loadLoans();
+      }
+    },
+
+    async logout() {
+      await supabase.auth.signOut();
+      this.user = null;
+    },
+
+    async loadLoans() {
+      const { data } = await supabase
+        .from("loans")
+        .select("id, amount, borrowers(firstname, lastname)");
+
+      this.loans = data || [];
+    },
+
+    async addLoan() {
+      const names = this.borrowerName.split(" ");
+      const firstname = names[0];
+      const lastname = names[1] || "";
+
+      const { data: borrower } = await supabase
+        .from("borrowers")
+        .insert({
+          firstname,
+          lastname,
+          user_id: this.user.id
+        })
+        .select()
+        .single();
+
+      const { data: loan } = await supabase
+        .from("loans")
+        .insert({
+          user_id: this.user.id,
+          borrower_id: borrower.id,
+          amount: this.amount,
+          payment_start_date: new Date().toISOString(),
+          payment_terms: 10,
+          is_semi_monthly: false
+        })
+        .select()
+        .single();
+
+      await supabase.rpc("generate_breakdowns", {
+        p_loan_id: loan.id
+      });
+
+      this.loadLoans();
+    },
+
+    async openLoan(loan) {
+      this.selectedLoan = loan;
+
+      const { data } = await supabase
+        .from("breakdowns")
+        .select("*")
+        .eq("loan_id", loan.id)
+        .order("due_date");
+
+      this.breakdowns = data || [];
+    },
+
+    async pay(breakdown) {
+      const amount = parseFloat(this.paymentInput[breakdown.id]);
+
+      if (!amount) return alert("Enter valid amount");
+
+      await supabase.from("payments").insert({
+        breakdown_id: breakdown.id,
+        amount: amount
+      });
+
+      this.openLoan(this.selectedLoan);
+    }
+  }
+}).mount("#app");
+</script>
+
+</body>
+</html>
