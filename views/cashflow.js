@@ -113,55 +113,59 @@ export default {
   },
 
   template: `
-  <div>
+    <div>
 
-    <h2>Cash Flow Ledger</h2>
+      <h2>Cash Flow Ledger</h2>
 
-    <table class="ledger-table">
+      <table class="ledger-table">
 
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th class="right">Amount</th>
-          <th class="right">Balance</th>
-        </tr>
-      </thead>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th class="right">Amount</th>
+            <th class="right">Balance</th>
+          </tr>
+        </thead>
 
-      <tbody>
+        <tbody>
 
-        <tr v-for="e in entries" :key="e.date + e.amount">
+          <tr v-for="e in entries" :key="e.id || e.date + '-' + e.amount">
 
-          <td>{{ formatDate(e.date) }}</td>
+            <td data-label="Date">
+              {{ formatDate(e.date) }}
+            </td>
 
-          <td>
-            <span class="status"
-              :class="{
-                paid: e.amount > 0,
-                overdue: e.amount < 0
-              }"
-            >
-              {{ e.type }}
-            </span>
-          </td>
+            <td data-label="Type">
+              <span class="status"
+                :class="{
+                  paid: e.amount > 0,
+                  overdue: e.amount < 0
+                }"
+              >
+                {{ e.type }}
+              </span>
+            </td>
 
-          <td>{{ e.description }}</td>
+            <td data-label="Description">
+              {{ e.description }}
+            </td>
 
-          <td class="right">
-            {{ e.amount > 0 ? '+' : '' }}₱{{ formatMoney(e.amount) }}
-          </td>
+            <td data-label="Amount" class="right">
+              {{ e.amount > 0 ? '+' : '' }}₱{{ formatMoney(e.amount) }}
+            </td>
 
-          <td class="right">
-            ₱{{ formatMoney(e.balance) }}
-          </td>
+            <td data-label="Balance" class="right">
+              ₱{{ formatMoney(e.balance) }}
+            </td>
 
-        </tr>
+          </tr>
 
-      </tbody>
+        </tbody>
 
-    </table>
+      </table>
 
-  </div>
+    </div>
   `
 };

@@ -162,19 +162,25 @@ export default {
 
           <tr v-for="loan in loans" :key="loan.id">
 
-            <td>
+            <td data-label="Borrower">
               <span class="link" @click="openLedger(loan)">
                 {{ loan.borrowers.firstname }} {{ loan.borrowers.lastname }}
               </span>
             </td>
 
-            <td class="right">₱{{ loan.amount }}</td>
+            <td data-label="Loan" class="right">
+              ₱{{ loan.amount }}
+            </td>
 
-            <td class="right">₱{{ getBalance(loan) }}</td>
+            <td data-label="Balance" class="right">
+              ₱{{ getBalance(loan) }}
+            </td>
 
-            <td>{{ formatDate(getNextDue(loan)) }}</td>
+            <td data-label="Next Due">
+              {{ formatDate(getNextDue(loan)) }}
+            </td>
 
-            <td>
+            <td data-label="Action">
               <span class="link" @click="payLoan(loan)">
                 Pay
               </span>

@@ -19,6 +19,8 @@ h2 {
    INPUTS
 ========================= */
 input, select {
+  width: 100%;
+  box-sizing: border-box;
   padding: 8px;
   border: 1px solid #dcdde1;
   border-radius: 6px;
@@ -61,6 +63,7 @@ button:hover {
   border: 1px solid #eaecef;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   transition: 0.2s ease;
+  overflow-x: auto;
 }
 
 .card:hover {
@@ -75,7 +78,6 @@ button:hover {
   height: 100vh;
 }
 
-/* Sidebar (lighter, softer) */
 .sidebar {
   width: 220px;
   background: #eef3fb;
@@ -99,7 +101,6 @@ button:hover {
   background: #c7d2fe;
 }
 
-/* Main content */
 .main {
   flex: 1;
   padding: 20px;
@@ -113,18 +114,29 @@ button:hover {
   display: flex;
   flex-direction: column;
   max-width: 450px;
+  gap: 10px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .form-group label {
-  font-size: 12px;
-  color: #636e72;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2d3436;
   margin-bottom: 4px;
+}
+
+.form input {
+  padding: 10px;
+  font-size: 14px;
+}
+
+.form button {
+  margin-top: 10px;
 }
 
 /* =========================
@@ -157,7 +169,6 @@ button:hover {
   margin-bottom: 8px;
 }
 
-/* Grid for loan details */
 .loan-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -166,7 +177,7 @@ button:hover {
 }
 
 /* =========================
-   TABLE (LEDGER)
+   TABLE
 ========================= */
 .ledger-table {
   width: 100%;
@@ -188,23 +199,20 @@ button:hover {
   border-bottom: 1px solid #f1f2f6;
 }
 
-/* Zebra */
 .ledger-table tr:nth-child(even) {
   background: #fafbfc;
 }
 
-/* Hover */
 .ledger-table tr:hover {
   background: #f1f5ff;
 }
 
-/* Right align numbers */
 .right {
   text-align: right;
 }
 
 /* =========================
-   STATUS BADGES
+   STATUS
 ========================= */
 .status {
   padding: 4px 8px;
@@ -228,7 +236,293 @@ button:hover {
   color: #c0392b;
 }
 
-/* positive vs negative */
-td span {
-  font-weight: 500;
+/* =========================
+   MOBILE HEADER + OVERLAY
+========================= */
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background: #eef3fb;
+  border-bottom: 1px solid #dfe6e9;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3);
+  z-index: 5;
+}
+
+/* =========================
+   MOBILE
+========================= */
+@media (max-width: 768px) {
+
+  body {
+    font-size: 16px;
+  }
+
+  .layout {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .mobile-header {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    height: 100%;
+    z-index: 10;
+    transition: 0.3s ease;
+    border-right: none;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .main {
+    padding: 12px;
+  }
+
+  .form {
+    max-width: 100%;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form input {
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  .loan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* TABLE → CARD MODE */
+  .ledger-table thead {
+    display: none;
+  }
+
+  .ledger-table tr {
+    display: block;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background: white;
+  }
+
+  .ledger-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border: none;
+  }
+
+  .ledger-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #636e72;
+  }
+
+  .ledger-table {
+    min-width: 600px;
+  }
+
+  .card {
+    overflow-x: auto;
+  }
+
+  .link {
+    display: inline-block;
+    padding: 6px 0;
+  }
+
+}
+
+/* =========================
+   CAPITAL PAGE ENHANCEMENT
+========================= */
+
+/* Dashboard cards */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.dash-card {
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #eaecef;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.dash-card h4 {
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #636e72;
+}
+
+.dash-card .amount {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* =========================
+   MOBILE
+========================= */
+@media (max-width: 768px) {
+
+  /* Stack dashboard */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-card {
+    padding: 14px;
+  }
+
+  .dash-card .amount {
+    font-size: 20px;
+  }
+
+  /* Form improvements */
+  .card .form {
+    gap: 12px;
+  }
+
+  .card .form input,
+  .card .form select {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  /* Buttons */
+  .card .form button {
+    width: 100%;
+  }
+
+  /* Tables (scroll mode since no data-labels) */
+  .ledger-table {
+    min-width: 650px;
+  }
+
+  .card {
+    overflow-x: auto;
+  }
+
+  /* Improve spacing between sections */
+  .card {
+    margin-bottom: 14px;
+  }
+
+  /* Filter input spacing */
+  .card label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+}
+
+/* =========================
+   DASHBOARD PAGE ENHANCEMENT
+========================= */
+
+/* Dashboard grid already exists — enhance spacing */
+.dashboard-grid {
+  gap: 12px;
+}
+
+/* Card consistency */
+.dash-card {
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #eaecef;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.dash-card h4 {
+  font-size: 13px;
+  color: #636e72;
+  margin-bottom: 6px;
+}
+
+.dash-card .amount {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* =========================
+   MOBILE
+========================= */
+@media (max-width: 768px) {
+
+  /* Stack dashboard cards */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-card {
+    padding: 14px;
+  }
+
+  .dash-card .amount {
+    font-size: 20px;
+  }
+
+  /* Improve section spacing */
+  .card {
+    margin-bottom: 14px;
+  }
+
+  /* Tables → scroll mode (since no data-label) */
+  .ledger-table {
+    min-width: 600px;
+  }
+
+  .card {
+    overflow-x: auto;
+  }
+
+  /* Improve tap area for links */
+  .link {
+    display: inline-block;
+    padding: 6px 0;
+  }
+
+  /* Improve readability */
+  h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  /* Highlight overdue rows better on mobile */
+  .ledger-table tr[style*="background:#fff5f5"] {
+    border-left: 4px solid #e74c3c;
+    padding-left: 6px;
+  }
+
 }

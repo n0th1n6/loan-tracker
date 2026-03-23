@@ -178,65 +178,87 @@ export default {
   },
 
   template: `
-  <div>
+    <div>
 
-    <h2>Create Loan</h2>
+      <h2>Create Loan</h2>
 
-    <p><b>{{ borrower.firstname }} {{ borrower.lastname }}</b></p>
+      <p><b>{{ borrower.firstname }} {{ borrower.lastname }}</b></p>
 
-    <div class="form">
-
-      <div class="form-group">
-        <label>Loan Amount</label>
-        <input v-model="form.amount" placeholder="e.g. 10000">
-      </div>
-
-      <div class="form-group">
-        <label>Interest (% per month)</label>
-        <input v-model="form.interest_rate" placeholder="e.g. 10">
-      </div>
-
-      <div class="form-group">
-        <label>Terms (Months)</label>
-        <input v-model="form.payment_terms" placeholder="e.g. 3">
-      </div>
-
-      <div class="form-group">
-        <label>Payment Type</label>
-        <select v-model="form.payment_type">
-          <option value="semi-monthly">Semi-Monthly</option>
-          <option value="monthly">Monthly</option>
-        </select>
-      </div>
-
-      <div v-if="form.payment_type === 'semi-monthly'">
+      <div class="form">
 
         <div class="form-group">
-          <label>Bill Day 1</label>
-          <input v-model="form.bill_day_1" placeholder="1–15">
+          <label>Loan Amount</label>
+          <input 
+            v-model="form.amount" 
+            placeholder="e.g. 10000"
+            inputmode="numeric"
+          >
         </div>
 
         <div class="form-group">
-          <label>Bill Day 2</label>
-          <input v-model="form.bill_day_2" placeholder="16–31">
+          <label>Interest (% per month)</label>
+          <input 
+            v-model="form.interest_rate" 
+            placeholder="e.g. 10"
+            inputmode="numeric"
+          >
         </div>
 
-      </div>
+        <div class="form-group">
+          <label>Terms (Months)</label>
+          <input 
+            v-model="form.payment_terms" 
+            placeholder="e.g. 3"
+            inputmode="numeric"
+          >
+        </div>
 
-      <div class="form-group">
-        <label>Start Date</label>
-        <input type="date" v-model="form.start_date">
-      </div>
+        <div class="form-group">
+          <label>Payment Type</label>
+          <select v-model="form.payment_type">
+            <option value="semi-monthly">Semi-Monthly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label>Purpose</label>
-        <input v-model="form.loan_purpose" placeholder="e.g. Business">
-      </div>
+        <div v-if="form.payment_type === 'semi-monthly'">
 
-      <button @click="createLoan">Create Loan</button>
+          <div class="form-group">
+            <label>Bill Day 1</label>
+            <input 
+              v-model="form.bill_day_1" 
+              placeholder="1–15"
+              inputmode="numeric"
+            >
+          </div>
+
+          <div class="form-group">
+            <label>Bill Day 2</label>
+            <input 
+              v-model="form.bill_day_2" 
+              placeholder="16–31"
+              inputmode="numeric"
+            >
+          </div>
+
+        </div>
+
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" v-model="form.start_date">
+        </div>
+
+        <div class="form-group">
+          <label>Purpose</label>
+          <input v-model="form.loan_purpose" placeholder="e.g. Business">
+        </div>
+
+        <button @click="createLoan">
+          Create Loan
+        </button>
+
+      </div>
 
     </div>
-
-  </div>
   `
 };

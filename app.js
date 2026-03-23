@@ -17,7 +17,8 @@ createApp({
       email: "",
       password: "",
       currentView: "Dashboard",
-      selectedBorrower: null
+      selectedBorrower: null,
+      sidebarOpen: false
     };
   },
   async mounted() {
@@ -38,35 +39,57 @@ createApp({
     async logout() {
       await supabase.auth.signOut();
       this.user = null;
-    }
+    },
+    navigate(view) {
+      this.currentView = view;
+      this.sidebarOpen = false; // auto close on mobile
+    }    
   },
-  template: `
-    <div>
+template: `
+  <div>
 
-      <div v-if="!user">
-        <h2>Login</h2>
-        <input v-model="email" placeholder="Email">
-        <input v-model="password" type="password" placeholder="Password">
-        <button @click="login">Login</button>
+    <!-- LOGIN -->
+    <div v-if="!user">
+      <h2>Login</h2>
+      <input v-model="email" placeholder="Email">
+      <input v-model="password" type="password" placeholder="Password">
+      <button @click="login">Login</button>
+    </div>
+
+    <!-- APP -->
+    <div v-else>
+
+      <!-- 🔥 MOBILE HEADER -->
+      <div class="mobile-header">
+        <button @click="sidebarOpen = !sidebarOpen">☰</button>
+        <span>Rochelli Loan Tracker</span>
       </div>
 
-      <div v-else class="layout">
+      <div class="layout">
 
         <!-- SIDEBAR -->
-        <div class="sidebar">
+        <div class="sidebar" :class="{ open: sidebarOpen }">
+
           <h2>Rochelli Loan Tracker</h2>
 
-          <button @click="currentView='dashboard'">Dashboard</button>
-          <button @click="currentView='Capital'">Capital</button>
-          <button @click="currentView='CashFlow'">Cash Flow</button>
-          <button @click="currentView='borrowers'">Borrowers</button>
-          <button @click="currentView='Outstanding'">Outstanding Loans</button>
+          <button @click="navigate('dashboard')">Dashboard</button>
+          <button @click="navigate('Capital')">Capital</button>
+          <button @click="navigate('CashFlow')">Cash Flow</button>
+          <button @click="navigate('borrowers')">Borrowers</button>
+          <button @click="navigate('Outstanding')">Outstanding Loans</button>
 
           <hr>
           <button @click="logout">Logout</button>
         </div>
 
-        <!-- MAIN CONTENT -->
+        <!-- OVERLAY (for mobile) -->
+        <div 
+          v-if="sidebarOpen" 
+          class="overlay" 
+          @click="sidebarOpen = false">
+        </div>
+
+        <!-- MAIN -->
         <div class="main">
           <component 
             :is="currentView" 
@@ -81,5 +104,6 @@ createApp({
       </div>
 
     </div>
+  </div>
   `
 }).mount("#app");
