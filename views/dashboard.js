@@ -203,7 +203,7 @@ export default {
   template: `
   <div>
 
-    <h2>Dashboard</h2>
+    <h2>Rochelli Loan Dashboard</h2>
 
     <!-- ===================== -->
     <!-- METRICS -->
