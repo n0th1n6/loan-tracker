@@ -340,6 +340,8 @@ export default {
                 {{ u.loans.borrowers.lastname }}
               </td>
 
+              <td>{{ formatDate(u.due_date) }}</td>
+
               <td class="right">
                 ₱{{ formatMoney(u.amount) }}
                 <br>
@@ -348,7 +350,6 @@ export default {
                 </span>
               </td>              
 
-              <td class="right">₱{{ formatMoney(u.amount) }}</td>
             </tr>
 
             <tr v-if="index === upcoming.length - 1 || u.due_date !== upcoming[index + 1].due_date">
