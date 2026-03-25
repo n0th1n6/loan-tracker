@@ -14,7 +14,8 @@ export default {
         collected: 0,
         outstanding: 0,
         overdue: 0,
-        cash: 0
+        cash: 0,
+        profit: 0
       }
     };
   },
@@ -69,13 +70,17 @@ export default {
       }, 0);
 
       const cash = totalCapital + collected - lent;
+            // ✅ PROFIT CALCULATION (as of latest data)
+      const principalRecovered = lent - outstanding;
+      const profit = collected - principalRecovered;
 
       this.totals = {
         lent,
         collected,
         outstanding,
         overdue: (overdue || []).length,
-        cash
+        cash,
+        profit
       };
     },
 
@@ -254,6 +259,11 @@ export default {
         <h4>Cash Flow</h4>
         <div class="amount">₱{{ formatMoney(totals.cash) }}</div>
       </div>
+
+      <div class="dash-card">
+        <h4>Profit</h4>
+        <div class="amount">₱{{ formatMoney(totals.profit) }}</div>
+      </div>      
     </div>
 
     <!-- OVERDUE -->
