@@ -70,9 +70,15 @@ export default {
       }, 0);
 
       const cash = totalCapital + collected - lent;
-            // ✅ PROFIT CALCULATION (as of latest data)
-      const principalRecovered = lent - outstanding;
-      const profit = collected - principalRecovered;
+      
+      const { data: paymentsWithInterest } = await supabase
+        .from("payments")
+        .select("interest_amount");
+
+      const profit = (paymentsWithInterest || []).reduce(
+        (s, p) => s + Number(p.interest_amount || 0),
+        0
+      );
 
       this.totals = {
         lent,

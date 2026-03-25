@@ -90,13 +90,6 @@ export default {
 
       const breakdowns = loan.breakdowns;
 
-      const totalPayments = loan.is_semi_monthly
-        ? loan.payment_terms * 2
-        : loan.payment_terms;
-
-      const principalPer = loan.amount / totalPayments;
-      const interestPer = (loan.total_amount - loan.amount) / totalPayments;
-
       for (let b of breakdowns) {
 
         if (remaining <= 0) break;
@@ -110,8 +103,9 @@ export default {
 
         const ratio = payAmount / b.amount;
 
-        const principal_amount = principalPer * ratio;
-        const interest_amount = interestPer * ratio;
+        // ✅ USE BREAKDOWN VALUES (correct)
+        const principal_amount = (b.principal_amount || 0) * ratio;
+        const interest_amount = (b.interest_amount || 0) * ratio;
 
         const { error } = await supabase
           .from("payments")
