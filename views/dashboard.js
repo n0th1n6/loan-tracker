@@ -349,7 +349,6 @@ export default {
                   Pay
                 </span>
               </td>              
-
             </tr>
 
             <tr v-if="index === upcoming.length - 1 || u.due_date !== upcoming[index + 1].due_date">
