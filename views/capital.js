@@ -24,7 +24,8 @@ export default {
       totals: {
         capital: 0,
         lent: 0,
-        available: 0
+        available: 0,
+        profit: 0
       }
     };
   },
@@ -34,7 +35,8 @@ export default {
     await this.loadLoanTotals();
     await this.loadUsers();
     await this.loadCapitalByUser();
-    await this.computeAvailable(); //
+    await this.computeAvailable();
+    await this.loadProfit();
   },
 
   computed: {
@@ -297,7 +299,19 @@ export default {
       );
 
       this.totals.available = total + collected - this.totals.lent;
-    }
+    },
+
+    async loadProfit() {
+
+      const { data } = await supabase
+        .from("payments")
+        .select("interest_amount");
+
+      this.totals.profit = (data || []).reduce(
+        (s, p) => s + Number(p.interest_amount || 0),
+        0
+      );
+    }    
 
   },
 
@@ -321,6 +335,11 @@ export default {
         <h4>Available Cash</h4>
         <div class="amount">₱{{ formatMoney(totals.available) }}</div>
       </div>
+
+      <div class="dash-card">
+        <h4>Profit Earned</h4>
+        <div class="amount">₱{{ formatMoney(totals.profit) }}</div>
+      </div>      
     </div>
 
     <div class="card">
