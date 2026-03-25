@@ -34,6 +34,7 @@ export default {
     await this.loadLoanTotals();
     await this.loadUsers();
     await this.loadCapitalByUser();
+    await this.computeAvailable(); //
   },
 
   computed: {
@@ -119,6 +120,7 @@ export default {
       this.resetForm();
       await this.load();
       await this.loadCapitalByUser();
+      await this.computeAvailable();
     },
 
     edit(r) {
@@ -162,6 +164,7 @@ export default {
       this.selected = null;
       await this.load();
       await this.loadCapitalByUser();
+      await this.computeAvailable();
     },
 
     async remove(r) {
@@ -180,6 +183,7 @@ export default {
 
       await this.load();
       await this.loadCapitalByUser();
+      await this.computeAvailable();
     },
 
     resetForm() {
@@ -210,7 +214,7 @@ export default {
       );
     },
 
-    getBalance() {
+    async getBalance() {
 
       let total = 0;
 
@@ -221,7 +225,19 @@ export default {
       });
 
       this.totals.capital = total;
-      this.totals.available = total - this.totals.lent;
+
+      // ✅ NEW: fetch collected payments
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("amount");
+
+      const collected = (payments || []).reduce(
+        (s, p) => s + Number(p.amount),
+        0
+      );
+
+      // ✅ FIXED FORMULA
+      this.totals.available = total + collected - this.totals.lent;
 
       return total;
     },
@@ -270,7 +286,31 @@ export default {
         ...v,
         net: v.in - v.out
       }));
-    }
+    },
+
+    async computeAvailable() {
+
+      let total = 0;
+
+      this.records.forEach(r => {
+        total += r.type === "in"
+          ? Number(r.amount)
+          : -Number(r.amount);
+      });
+
+      this.totals.capital = total;
+
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("amount");
+
+      const collected = (payments || []).reduce(
+        (s, p) => s + Number(p.amount),
+        0
+      );
+
+      this.totals.available = total + collected - this.totals.lent;
+    }    
 
   },
 
