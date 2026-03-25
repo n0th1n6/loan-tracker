@@ -27,7 +27,6 @@ export default {
   async mounted() {
     await this.loadSettings();
 
-    // default start date = today
     this.form.start_date = new Date().toISOString().split("T")[0];
   },
 
@@ -152,7 +151,6 @@ export default {
 
       console.log("LOAN CREATED:", loan);
 
-      // 🔥 MUST DO THIS FIRST
       const { error: recalcError } = await supabase.rpc("recalc_loan", {
         p_loan_id: loan.id
       });
@@ -161,7 +159,6 @@ export default {
         console.error("RECALC ERROR:", recalcError);
       }
 
-      // 🔥 THEN GENERATE SCHEDULE
       const { error: breakdownError } = await supabase.rpc("generate_breakdowns", {
         p_loan_id: loan.id
       });
@@ -173,6 +170,9 @@ export default {
       }
 
       alert("Loan created successfully");
+
+      // ✅ NEW: REDIRECT TO LEDGER (ONLY ADDITION)
+      this.$emit('open-ledger', this.borrower);
 
     }
   },
