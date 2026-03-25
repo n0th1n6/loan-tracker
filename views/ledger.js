@@ -1,154 +1,97 @@
 import { supabase } from "../supabase.js";
 
 export default {
-  props: ["user", "borrower"],
+  props: ["borrower"],
 
   data() {
     return {
       loans: [],
-      expanded: {} // 🔥 NEW
+
+      // ✅ NEW (payment UI state)
+      paymentForm: {
+        breakdown_id: null,
+        amount: "",
+        payment_date: new Date().toISOString().split("T")[0]
+      }
     };
   },
 
   async mounted() {
-    if (!this.borrower) {
-      console.error("No borrower passed to ledger");
-      return;
-    }    
-    
-    this.loadLedger();
+    await this.loadLedger();
   },
 
   methods: {
 
     async loadLedger() {
-
       const { data } = await supabase
         .from("loans")
         .select(`
-          id,
-          amount,
-          total_amount,
-          payment_start_date,
-          payment_terms,
-          loan_purpose,
-          is_semi_monthly,
-          bill_day_1,
-          bill_day_2,
+          *,
           breakdowns (
-            id,
-            amount,
-            due_date,
-            status,
-            payments (
-              amount,
-              payment_date
-            )
+            *,
+            payments (*)
           )
         `)
         .eq("borrower_id", this.borrower.id);
 
-      // sort breakdowns
-      (data || []).forEach(loan => {
-        loan.breakdowns = (loan.breakdowns || [])
-          .sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
-      });
-
       this.loans = data || [];
     },
 
-    calcLoanBalance(loan) {
-      let totalPaid = 0;
-
-      loan.breakdowns.forEach(b => {
-        totalPaid += this.getPaid(b);
-      });
-
-      return loan.total_amount - totalPaid;
-    },
-
-    exportCSV() {
-      let rows = ["Loan,Due Date,Amount,Paid,Status"];
-
-      this.loans.forEach(loan => {
-        loan.breakdowns.forEach(b => {
-          rows.push([
-            loan.id,
-            b.due_date,
-            b.amount,
-            this.getPaid(b),
-            b.status
-          ].join(","));
-        });
-      });
-
-      const blob = new Blob([rows.join("\n")], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "ledger.csv";
-      a.click();
-    },
-
     getPaid(b) {
-      let total = 0;
-      (b.payments || []).forEach(p => total += Number(p.amount));
-      return total;
+      return (b.payments || []).reduce(
+        (s, p) => s + Number(p.amount || 0),
+        0
+      );
+    },
+
+    formatMoney(v) {
+      return Number(v || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2
+      });
     },
 
     formatDate(d) {
-      if (!d) return "-";
       return new Date(d).toLocaleDateString();
     },
 
-    getRunningBalances(loan) {
-      let balance = loan.total_amount;
-      const result = {};
-
-      loan.breakdowns.forEach(b => {
-        const paid = this.getPaid(b);
-        balance -= paid;
-        result[b.id] = balance;
-      });
-
-      return result;
+    // =========================
+    // ✅ MODIFIED (no more prompt)
+    // =========================
+    payBreakdown(b) {
+      this.paymentForm = {
+        breakdown_id: b.id,
+        amount: "",
+        payment_date: new Date().toISOString().split("T")[0]
+      };
     },
 
-    getStatus(b) {
-      if (b.status === "paid") return "paid";
+    // =========================
+    // ✅ NEW
+    // =========================
+    async submitPayment() {
 
-      const today = new Date();
-      const due = new Date(b.due_date);
+      const selectedId = this.paymentForm.breakdown_id;
+      let remaining = parseFloat(this.paymentForm.amount);
 
-      if (due < today) return "overdue";
-
-      return "pending";
-    },
-
-    // 🔥 NEW: toggle payment history
-    togglePayments(b) {
-      this.expanded[b.id] = !this.expanded[b.id];
-    },
-
-    async payBreakdown(selectedBreakdown) {
-
-      const amount = prompt(
-        "Enter payment amount starting from: " + this.formatDate(selectedBreakdown.due_date)
-      );
-
-      if (!amount || isNaN(amount)) {
+      if (!remaining || isNaN(remaining)) {
         alert("Invalid amount");
         return;
       }
 
-      let remaining = parseFloat(amount);
+      const paymentDate = this.paymentForm.payment_date;
 
       const loan = this.loans.find(l =>
-        l.breakdowns.some(b => b.id === selectedBreakdown.id)
+        l.breakdowns.some(b => b.id === selectedId)
       );
 
       const breakdowns = loan.breakdowns;
+
+      const totalPayments = loan.is_semi_monthly
+        ? loan.payment_terms * 2
+        : loan.payment_terms;
+
+      const principalPer = loan.amount / totalPayments;
+      const interestPer = (loan.total_amount - loan.amount) / totalPayments;
 
       for (let b of breakdowns) {
 
@@ -161,11 +104,19 @@ export default {
 
         const payAmount = Math.min(balance, remaining);
 
+        const ratio = payAmount / b.amount;
+
+        const principal_amount = principalPer * ratio;
+        const interest_amount = interestPer * ratio;
+
         const { error } = await supabase
           .from("payments")
           .insert({
             breakdown_id: b.id,
-            amount: payAmount
+            amount: payAmount,
+            payment_date: paymentDate,
+            principal_amount,
+            interest_amount
           });
 
         if (error) {
@@ -186,11 +137,9 @@ export default {
         remaining -= payAmount;
       }
 
-      if (remaining > 0) {
-        alert("Excess payment ignored");
-      }
+      this.paymentForm.breakdown_id = null;
 
-      alert("Payment applied");
+      alert("Payment saved");
 
       this.loadLedger();
     }
@@ -202,52 +151,21 @@ export default {
 
     <h2>Ledger</h2>
 
-    <p v-if="borrower">
-      <b>{{ borrower.firstname }} {{ borrower.lastname }}</b>
-    </p>
-
     <div v-for="loan in loans" :key="loan.id" class="card">
 
-      <div v-if="!loan._balances">
-        {{ loan._balances = getRunningBalances(loan) }}
-      </div>
-
       <div class="loan-header">
-
         <div class="loan-title">
-          Loan Amount: ₱{{ loan.amount }}
+          Loan: ₱{{ formatMoney(loan.amount) }}
         </div>
-
-        <div class="loan-grid">
-
-          <div><b>Total:</b> ₱{{ loan.total_amount }}</div>
-          <div><b>Balance:</b> ₱{{ calcLoanBalance(loan) }}</div>
-
-          <div><b>Start Date:</b> {{ formatDate(loan.payment_start_date) }}</div>
-          <div><b>Terms:</b> {{ loan.payment_terms }} months</div>
-
-          <div><b>Payment Type:</b>
-            {{ loan.is_semi_monthly ? 'Semi-Monthly' : 'Monthly' }}
-          </div>
-
-          <div v-if="loan.is_semi_monthly">
-            <b>Bill Days:</b> {{ loan.bill_day_1 }} / {{ loan.bill_day_2 }}
-          </div>
-
-          <div><b>Purpose:</b> {{ loan.loan_purpose || '-' }}</div>
-
-        </div>
-
       </div>
 
       <table class="ledger-table">
 
         <thead>
           <tr>
-            <th>Due Date</th>
-            <th>Amount</th>
+            <th>Date</th>
+            <th>Due</th>
             <th>Paid</th>
-            <th>Balance</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -257,71 +175,44 @@ export default {
 
           <template v-for="b in loan.breakdowns" :key="b.id">
 
-            <!-- MAIN ROW -->
-            <tr @click="togglePayments(b)" style="cursor:pointer">
-
+            <tr>
               <td>{{ formatDate(b.due_date) }}</td>
 
-              <td class="right">₱{{ b.amount }}</td>
+              <td class="right">₱{{ formatMoney(b.amount) }}</td>
 
-              <td class="right">₱{{ getPaid(b) }}</td>
+              <td class="right">₱{{ formatMoney(getPaid(b)) }}</td>
 
-              <td class="right">
-                ₱{{ loan._balances[b.id]?.toFixed(2) }}
-              </td>
+              <td>{{ b.status }}</td>
 
               <td>
-                <span :class="'status ' + getStatus(b)">
-                  {{ getStatus(b) }}
-                </span>
-              </td>
-
-              <td>
-                <span 
-                  v-if="getPaid(b) < b.amount"
-                  class="link"
-                  @click.stop="payBreakdown(b)"
-                >
+                <span class="link" @click="payBreakdown(b)">
                   Pay
                 </span>
-
-                <span v-else style="color:#999;">
-                  Paid
-                </span>
               </td>
-
             </tr>
 
-            <!-- EXPANDED PAYMENT HISTORY -->
-            <tr v-if="expanded[b.id]">
+            <!-- ✅ INLINE PAYMENT FORM -->
+            <tr v-if="paymentForm.breakdown_id === b.id">
+              <td colspan="5">
 
-              <td colspan="6">
+                <div class="form">
 
-                <div style="padding:10px; background:#f9fafb; border-radius:6px;">
-
-                  <b>Payments:</b>
-
-                  <div v-if="!b.payments || b.payments.length === 0">
-                    No payments yet
+                  <div class="form-group">
+                    <label>Amount</label>
+                    <input v-model="paymentForm.amount">
                   </div>
 
-                  <div v-else>
-
-                    <div 
-                      v-for="(p, i) in b.payments" 
-                      :key="i"
-                      style="display:flex; justify-content:space-between; padding:4px 0;"
-                    >
-                      <span>{{ formatDate(p.payment_date) }}</span>
-                      <span>₱{{ p.amount }}</span>
-                    </div>
-
+                  <div class="form-group">
+                    <label>Payment Date</label>
+                    <input type="date" v-model="paymentForm.payment_date">
                   </div>
+
+                  <button @click="submitPayment">Save</button>
+                  <button @click="paymentForm.breakdown_id = null">Cancel</button>
 
                 </div>
 
               </td>
-
             </tr>
 
           </template>
@@ -329,8 +220,6 @@ export default {
         </tbody>
 
       </table>
-
-      <button @click="exportCSV">Export CSV</button>
 
     </div>
 
