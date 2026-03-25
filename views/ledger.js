@@ -18,6 +18,10 @@ export default {
 
   async mounted() {
     await this.loadLedger();
+
+    if (this.$root.selectedBreakdown) {
+      this.paymentForm.breakdown_id = this.$root.selectedBreakdown.id;
+    }    
   },
 
   methods: {

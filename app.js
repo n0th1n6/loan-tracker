@@ -98,6 +98,7 @@ template: `
 
             @open-loan-form="b => { selectedBorrower = b; currentView = 'LoanForm'; }"
             @open-ledger="b => { selectedBorrower = b; currentView = 'Ledger'; }"
+            @pay-breakdown="b => {selectedBorrower = b.loans.borrowers; selectedBreakdown = b; currentView = 'Ledger'; }"            
           />      
         </div>
 

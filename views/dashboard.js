@@ -340,7 +340,13 @@ export default {
                 {{ u.loans.borrowers.lastname }}
               </td>
 
-              <td>{{ formatDate(u.due_date) }}</td>
+              <td class="right">
+                ₱{{ formatMoney(u.amount) }}
+                <br>
+                <span class="link" @click="$emit('pay-breakdown', u)">
+                  Pay
+                </span>
+              </td>              
 
               <td class="right">₱{{ formatMoney(u.amount) }}</td>
             </tr>
