@@ -8,6 +8,7 @@ export default {
       borrowers: [],
       overdueBorrowers: [],
       upcoming: [],
+      upcomingGrouped: [], // ✅ NEW
       totals: {
         lent: 0,
         collected: 0,
@@ -55,7 +56,7 @@ export default {
         .select("id")
         .eq("status", "overdue");
 
-      const cash = collected - lent; // 🔥 simple cash flow
+      const cash = collected - lent;
 
       this.totals = {
         lent,
@@ -67,7 +68,7 @@ export default {
     },
 
     // =====================
-    // BORROWERS (TOP)
+    // BORROWERS
     // =====================
     async loadBorrowers() {
 
@@ -109,7 +110,7 @@ export default {
     },
 
     // =====================
-    // OVERDUE (WITH AMOUNT)
+    // OVERDUE
     // =====================
     async loadOverdue() {
 
@@ -160,7 +161,7 @@ export default {
     },
 
     // =====================
-    // UPCOMING PAYMENTS
+    // UPCOMING (UPDATED)
     // =====================
     async loadUpcoming() {
 
@@ -185,7 +186,31 @@ export default {
         .lte("due_date", next7.toISOString())
         .neq("status", "paid");
 
-      this.upcoming = data || [];
+      const raw = data || [];
+
+      // ✅ SORT
+      raw.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
+      // ✅ GROUP + SUBTOTAL
+      const map = {};
+
+      raw.forEach(u => {
+        const key = u.due_date;
+
+        if (!map[key]) {
+          map[key] = {
+            date: key,
+            items: [],
+            subtotal: 0
+          };
+        }
+
+        map[key].items.push(u);
+        map[key].subtotal += Number(u.amount);
+      });
+
+      this.upcoming = raw; // keep original
+      this.upcomingGrouped = Object.values(map);
     },
 
     formatMoney(v) {
@@ -205,11 +230,7 @@ export default {
 
     <h2>Rochelli Loan Dashboard</h2>
 
-    <!-- ===================== -->
-    <!-- METRICS -->
-    <!-- ===================== -->
     <div class="dashboard-grid">
-
       <div class="dash-card">
         <h4>Total Lent</h4>
         <div class="amount">₱{{ formatMoney(totals.lent) }}</div>
@@ -234,94 +255,9 @@ export default {
         <h4>Cash Flow</h4>
         <div class="amount">₱{{ formatMoney(totals.cash) }}</div>
       </div>
-
     </div>
 
-    <!-- ===================== -->
-    <!-- OVERDUE -->
-    <!-- ===================== -->
-    <div class="card">
-
-      <h3 style="color:#c0392b;">Overdue Borrowers</h3>
-
-      <table class="ledger-table">
-
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th class="right">Amount</th>
-            <th class="right">Count</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          <tr 
-            v-for="b in overdueBorrowers"
-            :key="b.id"
-            style="background:#fff5f5;"
-          >
-
-            <td>
-              <span class="link" @click="$emit('open-ledger', b)">
-                {{ b.firstname }} {{ b.lastname }}
-              </span>
-            </td>
-
-            <td class="right">₱{{ formatMoney(b.amount) }}</td>
-            <td class="right">{{ b.count }}</td>
-
-          </tr>
-
-          <tr v-if="overdueBorrowers.length === 0">
-            <td colspan="3">No overdue 🎉</td>
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-    <!-- ===================== -->
-    <!-- TOP BORROWERS -->
-    <!-- ===================== -->
-    <div class="card">
-
-      <h3>Top Outstanding Borrowers</h3>
-
-      <table class="ledger-table">
-
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th class="right">Balance</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          <tr v-for="b in borrowers.slice(0, 10)" :key="b.id">
-
-            <td>
-              <span class="link" @click="$emit('open-ledger', b)">
-                {{ b.firstname }} {{ b.lastname }}
-              </span>
-            </td>
-
-            <td class="right">₱{{ formatMoney(b.balance) }}</td>
-
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-    <!-- ===================== -->
     <!-- UPCOMING -->
-    <!-- ===================== -->
     <div class="card">
 
       <h3>Upcoming (Next 7 Days)</h3>
@@ -338,18 +274,31 @@ export default {
 
         <tbody>
 
-          <tr v-for="u in upcoming" :key="u.due_date">
+          <!-- GROUPED -->
+          <template v-for="g in upcomingGrouped">
 
-            <td>
-              {{ u.loans.borrowers.firstname }} 
-              {{ u.loans.borrowers.lastname }}
-            </td>
+            <!-- DATE HEADER -->
+            <tr>
+              <td colspan="3"><b>{{ formatDate(g.date) }}</b></td>
+            </tr>
 
-            <td>{{ formatDate(u.due_date) }}</td>
+            <!-- ITEMS -->
+            <tr v-for="u in g.items" :key="u.due_date + u.amount">
+              <td>
+                {{ u.loans.borrowers.firstname }} 
+                {{ u.loans.borrowers.lastname }}
+              </td>
+              <td>{{ formatDate(u.due_date) }}</td>
+              <td class="right">₱{{ formatMoney(u.amount) }}</td>
+            </tr>
 
-            <td class="right">₱{{ formatMoney(u.amount) }}</td>
+            <!-- SUBTOTAL -->
+            <tr>
+              <td colspan="2"><b>Subtotal</b></td>
+              <td class="right"><b>₱{{ formatMoney(g.subtotal) }}</b></td>
+            </tr>
 
-          </tr>
+          </template>
 
           <tr v-if="upcoming.length === 0">
             <td colspan="3">No upcoming payments</td>
