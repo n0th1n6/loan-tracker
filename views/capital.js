@@ -214,7 +214,7 @@ export default {
       );
     },
 
-    async getBalance() {
+    getBalance() {
 
       let total = 0;
 
@@ -225,19 +225,6 @@ export default {
       });
 
       this.totals.capital = total;
-
-      // ✅ NEW: fetch collected payments
-      const { data: payments } = await supabase
-        .from("payments")
-        .select("amount");
-
-      const collected = (payments || []).reduce(
-        (s, p) => s + Number(p.amount),
-        0
-      );
-
-      // ✅ FIXED FORMULA
-      this.totals.available = total + collected - this.totals.lent;
 
       return total;
     },
@@ -310,7 +297,7 @@ export default {
       );
 
       this.totals.available = total + collected - this.totals.lent;
-    }    
+    }
 
   },
 
