@@ -29,16 +29,17 @@ export default {
   methods: {
 
     // =====================
-    // TOTALS
+    // TOTALS (FIXED)
     // =====================
     async loadTotals() {
 
+      // ✅ FIX: use amount (principal only)
       const { data: loans } = await supabase
         .from("loans")
-        .select("total_amount");
+        .select("amount");
 
       const lent = (loans || []).reduce(
-        (s, l) => s + Number(l.total_amount || 0), 0
+        (s, l) => s + Number(l.amount || 0), 0
       );
 
       const { data: payments } = await supabase
@@ -56,7 +57,18 @@ export default {
         .select("id")
         .eq("status", "overdue");
 
-      const cash = collected - lent;
+      // ✅ FIX: include capital in cash calculation
+      const { data: capital } = await supabase
+        .from("capital")
+        .select("amount, type");
+
+      const totalCapital = (capital || []).reduce((sum, c) => {
+        return c.type === "in"
+          ? sum + Number(c.amount)
+          : sum - Number(c.amount);
+      }, 0);
+
+      const cash = totalCapital + collected - lent;
 
       this.totals = {
         lent,
@@ -161,7 +173,7 @@ export default {
     },
 
     // =====================
-    // UPCOMING PAYMENTS (UPDATED ONLY HERE)
+    // UPCOMING PAYMENTS (UNCHANGED)
     // =====================
     async loadUpcoming() {
 
@@ -188,10 +200,8 @@ export default {
 
       const raw = data || [];
 
-      // ✅ SORT
       raw.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
 
-      // ✅ SUBTOTAL
       const subtotal = {};
       raw.forEach(u => {
         if (!subtotal[u.due_date]) subtotal[u.due_date] = 0;
@@ -274,7 +284,7 @@ export default {
       </table>
     </div>
 
-    <!-- TOP BORROWERS (UNCHANGED) -->
+    <!-- TOP BORROWERS -->
     <div class="card">
       <h3>Top Outstanding Borrowers</h3>
       <table class="ledger-table">
@@ -297,7 +307,7 @@ export default {
       </table>
     </div>
 
-    <!-- UPCOMING (ONLY MODIFIED PART) -->
+    <!-- UPCOMING -->
     <div class="card">
       <h3>Upcoming (Next 7 Days)</h3>
 
@@ -325,7 +335,6 @@ export default {
               <td class="right">₱{{ formatMoney(u.amount) }}</td>
             </tr>
 
-            <!-- ✅ SUBTOTAL -->
             <tr v-if="index === upcoming.length - 1 || u.due_date !== upcoming[index + 1].due_date">
               <td colspan="2"><b>Subtotal</b></td>
               <td class="right">
