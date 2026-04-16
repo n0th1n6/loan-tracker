@@ -245,9 +245,9 @@ export default {
           lastname,
           loans (
             breakdowns (
-              status,
               amount,
-              paid_amount
+              paid_amount,
+              payments (amount)
             )
           )
         `);
@@ -258,10 +258,20 @@ export default {
 
         (b.loans || []).forEach(loan => {
           (loan.breakdowns || []).forEach(bd => {
-            if (bd.status !== "paid") {
-              const remaining = Number(bd.amount) - Number(bd.paid_amount || 0);
-              if (remaining > 0.01) remainingCount++;
+
+            // 🔥 compute actual paid (fallback safe)
+            let paid = Number(bd.paid_amount || 0);
+
+            if (!paid && bd.payments) {
+              paid = bd.payments.reduce((s, p) => s + Number(p.amount), 0);
             }
+
+            const remaining = Number(bd.amount) - paid;
+
+            if (remaining > 0.01) {
+              remainingCount++;
+            }
+
           });
         });
 
