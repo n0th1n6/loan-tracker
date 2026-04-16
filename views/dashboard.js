@@ -9,6 +9,7 @@ export default {
       overdueBorrowers: [],
       upcoming: [],
       upcomingSubtotal: {}, // ✅ ADDED
+      almostDone: [], // ✅ NEW
       totals: {
         lent: 0,
         collected: 0,
@@ -25,6 +26,7 @@ export default {
     await this.loadBorrowers();
     await this.loadOverdue();
     await this.loadUpcoming();
+    await this.loadAlmostDone(); // ✅ NEW
   },
 
   methods: {
@@ -34,7 +36,6 @@ export default {
     // =====================
     async loadTotals() {
 
-      // ✅ FIX: use amount (principal only)
       const { data: loans } = await supabase
         .from("loans")
         .select("amount");
@@ -58,7 +59,6 @@ export default {
         .select("id")
         .eq("status", "overdue");
 
-      // ✅ FIX: include capital in cash calculation
       const { data: capital } = await supabase
         .from("capital")
         .select("amount, type");
@@ -133,13 +133,20 @@ export default {
     },
 
     // =====================
-    // OVERDUE (WITH AMOUNT)
+    // OVERDUE (UPDATED: 1 DAY ONLY)
     // =====================
     async loadOverdue() {
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const start = new Date(yesterday.setHours(0,0,0,0));
+      const end = new Date(yesterday.setHours(23,59,59,999));
 
       const { data } = await supabase
         .from("breakdowns")
         .select(`
+          due_date,
           amount,
           payments (amount),
           loans (
@@ -151,7 +158,9 @@ export default {
             )
           )
         `)
-        .eq("status", "overdue");
+        .gte("due_date", start.toISOString())
+        .lte("due_date", end.toISOString())
+        .neq("status", "paid");
 
       const map = {};
 
@@ -223,6 +232,44 @@ export default {
       this.upcomingSubtotal = subtotal;
     },
 
+    // =====================
+    // ✅ NEW: ALMOST DONE (1 PAYMENT LEFT)
+    // =====================
+    async loadAlmostDone() {
+
+      const { data } = await supabase
+        .from("borrowers")
+        .select(`
+          id,
+          firstname,
+          lastname,
+          loans (
+            breakdowns (
+              status,
+              amount,
+              paid_amount
+            )
+          )
+        `);
+
+      this.almostDone = (data || []).filter(b => {
+
+        let remainingCount = 0;
+
+        (b.loans || []).forEach(loan => {
+          (loan.breakdowns || []).forEach(bd => {
+            if (bd.status !== "paid") {
+              const remaining = Number(bd.amount) - Number(bd.paid_amount || 0);
+              if (remaining > 0.01) remainingCount++;
+            }
+          });
+        });
+
+        return remainingCount === 1;
+      });
+
+    },
+
     formatMoney(v) {
       return Number(v || 0).toLocaleString(undefined, {
         minimumFractionDigits: 2
@@ -270,6 +317,25 @@ export default {
         <h4>Profit</h4>
         <div class="amount">₱{{ formatMoney(totals.profit) }}</div>
       </div>      
+    </div>
+
+    <!-- ✅ NEW: ALMOST DONE -->
+    <div class="card">
+      <h3>Almost Done (1 Payment Left)</h3>
+      <table class="ledger-table">
+        <tbody>
+          <tr v-for="b in almostDone" :key="b.id">
+            <td>
+              <span class="link" @click="$emit('open-ledger', b)">
+                {{ b.firstname }} {{ b.lastname }}
+              </span>
+            </td>
+          </tr>
+          <tr v-if="almostDone.length === 0">
+            <td>No borrowers 🎉</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- OVERDUE -->
