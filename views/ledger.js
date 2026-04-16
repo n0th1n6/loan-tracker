@@ -183,7 +183,11 @@ export default {
               <td>{{ b.status }}</td>
 
               <td>
-                <span class="link" @click="payBreakdown(b)">
+                <span 
+                  v-if="(b.amount - getPaid(b)) > 0.01"
+                  class="link" 
+                  @click="payBreakdown(b)"
+                >
                   Pay
                 </span>
               </td>
