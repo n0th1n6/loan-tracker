@@ -36,7 +36,8 @@ export default {
             payments (*)
           )
         `)
-        .eq("borrower_id", this.borrower.id);
+        .eq("borrower_id", this.borrower.id)
+        .order("due_date", { foreignTable: "breakdowns", ascending: true });
 
       this.loans = data || [];
     },
