@@ -7,7 +7,6 @@ export default {
     return {
       loans: [],
 
-      // ✅ NEW (payment UI state)
       paymentForm: {
         breakdown_id: null,
         amount: "",
@@ -37,6 +36,10 @@ export default {
           )
         `)
         .eq("borrower_id", this.borrower.id)
+
+        // ✅ ADDED: newest loans first
+        .order("created_at", { ascending: false })
+
         .order("due_date", { foreignTable: "breakdowns", ascending: true });
 
       this.loans = data || [];
@@ -59,9 +62,6 @@ export default {
       return new Date(d).toLocaleDateString();
     },
 
-    // =========================
-    // ✅ MODIFIED (no more prompt)
-    // =========================
     payBreakdown(b) {
       this.paymentForm = {
         breakdown_id: b.id,
@@ -70,9 +70,6 @@ export default {
       };
     },
 
-    // =========================
-    // ✅ NEW
-    // =========================
     async submitPayment() {
 
       const selectedId = this.paymentForm.breakdown_id;
@@ -104,7 +101,6 @@ export default {
 
         const ratio = payAmount / b.amount;
 
-        // ✅ USE BREAKDOWN VALUES (correct)
         const principal_amount = (b.principal_amount || 0) * ratio;
         const interest_amount = (b.interest_amount || 0) * ratio;
 
@@ -156,6 +152,12 @@ export default {
         <div class="loan-title">
           Loan: ₱{{ formatMoney(loan.amount) }}
         </div>
+
+        <!-- ✅ ADDED -->
+        <div class="loan-meta">
+          <div><strong>Purpose:</strong> {{ loan.loan_purpose || 'N/A' }}</div>
+          <div><strong>Created:</strong> {{ formatDate(loan.created_at) }}</div>
+        </div>
       </div>
 
       <table class="ledger-table">
@@ -194,7 +196,6 @@ export default {
               </td>
             </tr>
 
-            <!-- ✅ INLINE PAYMENT FORM -->
             <tr v-if="paymentForm.breakdown_id === b.id">
               <td colspan="5">
 
